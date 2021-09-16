@@ -10,11 +10,6 @@ sudo apt-get install -y \
     automake \
     make \
     cmake \
-    python
-
-sudo apt-get install -y \
     scons \
-    ragel \
-    gengetopt \
-    pulseaudio \
-    libsndfile1-dev
+    python \
+    pulseaudio

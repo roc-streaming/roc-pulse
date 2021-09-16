@@ -1,63 +1,92 @@
 cmake_minimum_required(VERSION 3.0.0)
 
-project(roc_pulse C)
+project(roc_pulse C CXX)
 
-set(HOST "" CACHE STRING "target host triple, e.g. aarch64-linux-gnu")
+set(HOST "" CACHE STRING "target host triplet, e.g. aarch64-linux-gnu")
 
-set(ROC_INCLUDE_DIR "" CACHE STRING "roc toolkit include directory")
-set(ROC_LIBRARY_DIR "" CACHE STRING "roc toolkit library directory")
+include("cmake/setup_toolchain.cmake")
 
-set(PULSEAUDIO_SOURCE_DIR "" CACHE STRING "directory with pulseaudio source code")
-set(PULSEAUDIO_BUILD_DIR "" CACHE STRING "directory with pulseaudio build results")
+option(DOWNLOAD_PULSEAUDIO "automatically download pulseaudio" ON)
+option(DOWNLOAD_LIBTOOL "automatically download libtool (ltdl)" ON)
+option(DOWNLOAD_ROC "automatically download and build roc-toolkit" ON)
 
-if(NOT HOST STREQUAL "")
-  set(CMAKE_CROSSCOMPILING ON)
-  set(CMAKE_SYSTEM_NAME Linux)
-
-  find_program(C_COMPILER ${HOST}-gcc)
-  if(C_COMPILER STREQUAL "C_COMPILER-NOTFOUND")
-    find_program(C_COMPILER ${HOST}-clang)
-  endif()
-
-  set(CMAKE_C_COMPILER "${C_COMPILER}")
-  message(STATUS "Using CMAKE_C_COMPILER - ${CMAKE_C_COMPILER}")
-endif()
+set(DEFAULT_PULSEAUDIO_VERSION "")
 
 if(NOT CMAKE_CROSSCOMPILING)
   include("cmake/detect_pulseaudio.cmake")
+
+  if(NOT SYSTEM_PULSEAUDIO_VERSION STREQUAL "")
+    set(DEFAULT_PULSEAUDIO_VERSION "${SYSTEM_PULSEAUDIO_VERSION}")
+  endif()
 endif()
 
-if(PULSEAUDIO_SOURCE_DIR STREQUAL "")
-  include("cmake/build_pulseaudio.cmake")
+set(PULSEAUDIO_VERSION "${DEFAULT_PULSEAUDIO_VERSION}" CACHE STRING "pulseaudio version")
+set(PULSEAUDIO_DIR "" CACHE STRING "directory with pulseaudio source code")
+
+set(LIBTOOL_VERSION "2.4.6" CACHE STRING "libtool version")
+set(LIBTOOL_DIR "" CACHE STRING "directory with libtool source code")
+
+set(ROC_INCLUDE_DIR "" CACHE STRING "roc toolkit include directory")
+set(ROC_LIB_DIR "" CACHE STRING "roc toolkit library directory")
+
+if(PULSEAUDIO_VERSION STREQUAL "")
+  message(FATAL_ERROR "can't auto-detect PULSEAUDIO_VERSION, define it manually")
 else()
-  if(PULSEAUDIO_BUILD_DIR STREQUAL "")
-    set(PULSEAUDIO_BUILD_DIR "${PULSEAUDIO_SOURCE_DIR}")
+  message(STATUS "Using PULSEAUDIO_VERSION - ${PULSEAUDIO_VERSION}")
+endif()
+
+if(DOWNLOAD_PULSEAUDIO)
+  include("cmake/download_pulseaudio.cmake")
+else()
+  if(PULSEAUDIO_DIR STREQUAL "")
+    message(FATAL_ERROR "if DOWNLOAD_PULSEAUDIO is OFF, PULSEAUDIO_DIR should be defined")
   endif()
 
-  get_filename_component(PULSEAUDIO_SOURCE_DIR "${PULSEAUDIO_SOURCE_DIR}" ABSOLUTE)
-  get_filename_component(PULSEAUDIO_BUILD_DIR "${PULSEAUDIO_BUILD_DIR}" ABSOLUTE)
+  get_filename_component(PULSEAUDIO_DIR "${PULSEAUDIO_DIR}" ABSOLUTE)
 
-  message(STATUS "Using PULSEAUDIO_SOURCE_DIR - ${PULSEAUDIO_SOURCE_DIR}")
-  message(STATUS "Using PULSEAUDIO_BUILD_DIR - ${PULSEAUDIO_BUILD_DIR}")
+  message(STATUS "Using PULSEAUDIO_DIR - ${PULSEAUDIO_DIR}")
 
   include_directories(SYSTEM
-    "${PULSEAUDIO_SOURCE_DIR}/src"
-    "${PULSEAUDIO_BUILD_DIR}"
+    "${PULSEAUDIO_DIR}/src"
     )
 endif()
 
-if(NOT ROC_INCLUDE_DIR STREQUAL "")
-  get_filename_component(ROC_INCLUDE_DIR "${ROC_INCLUDE_DIR}" ABSOLUTE)
-  message(STATUS "Using ROC_INCLUDE_DIR - ${ROC_INCLUDE_DIR}")
+if(DOWNLOAD_LIBTOOL)
+  if(LIBTOOL_VERSION STREQUAL "")
+    message(FATAL_ERROR "if DOWNLOAD_LIBTOOL is ON, LIBTOOL_VERSION should be defined")
+  else()
+    message(STATUS "Using LIBTOOL_VERSION - ${LIBTOOL_VERSION}")
+  endif()
 
-  include_directories(SYSTEM "${ROC_INCLUDE_DIR}")
+  include("cmake/download_libtool.cmake")
+elseif(NOT LIBTOOL_DIR STREQUAL "")
+  get_filename_component(LIBTOOL_DIR "${LIBTOOL_DIR}" ABSOLUTE)
+
+  message(STATUS "Using LIBTOOL_DIR - ${LIBTOOL_DIR}")
+
+  include_directories(SYSTEM
+    "${LIBTOOL_DIR}/libltdl"
+    )
 endif()
 
-if(NOT ROC_LIBRARY_DIR STREQUAL "")
-  get_filename_component(ROC_LIBRARY_DIR "${ROC_LIBRARY_DIR}" ABSOLUTE)
-  message(STATUS "Using ROC_LIBRARY_DIR - ${ROC_LIBRARY_DIR}")
+if(DOWNLOAD_ROC)
+  include("cmake/download_roc.cmake")
+else()
+  if(NOT ROC_INCLUDE_DIR STREQUAL "")
+    get_filename_component(ROC_INCLUDE_DIR "${ROC_INCLUDE_DIR}" ABSOLUTE)
+    message(STATUS "Using ROC_INCLUDE_DIR - ${ROC_INCLUDE_DIR}")
 
-  link_directories("${ROC_LIBRARY_DIR}")
+    include_directories(SYSTEM "${ROC_INCLUDE_DIR}")
+  endif()
+
+  if(NOT ROC_LIB_DIR STREQUAL "")
+    get_filename_component(ROC_LIB_DIR "${ROC_LIB_DIR}" ABSOLUTE)
+    message(STATUS "Using ROC_LIB_DIR - ${ROC_LIB_DIR}")
+
+    link_directories("${ROC_LIB_DIR}")
+  endif()
+
+  link_libraries("roc")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -69,8 +98,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-set(CMAKE_C_FLAGS
-  "${CMAKE_C_FLAGS} -fPIC")
+if(NOT CMAKE_C_FLAGS MATCHES "-fPIC")
+  set(CMAKE_C_FLAGS
+    "${CMAKE_C_FLAGS} -fPIC")
+endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   set(CMAKE_C_FLAGS
@@ -82,13 +113,31 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     "${CMAKE_C_FLAGS} -Weverything -Wno-unused-variable")
 endif()
 
+add_definitions(
+  -DROC_PULSEAUDIO_VERSION=${PULSEAUDIO_VERSION}
+  )
+
+include_directories("src")
+
 add_library(rocpulse_helpers OBJECT
   "src/rocpulse_helpers.c"
   )
 
-if(PULSEAUDIO_SOURCE_DIR STREQUAL "")
+if(DOWNLOAD_PULSEAUDIO)
   add_dependencies(rocpulse_helpers
     pulseaudio
+    )
+endif()
+
+if(DOWNLOAD_LIBTOOL)
+  add_dependencies(rocpulse_helpers
+    libtool
+    )
+endif()
+
+if(DOWNLOAD_ROC)
+  add_dependencies(rocpulse_helpers
+    roc
     )
 endif()
 
@@ -106,6 +155,8 @@ set(ALL_MODULES
   module-roc-sink
   module-roc-sink-input
   )
+
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
 
 if(CMAKE_CROSSCOMPILING OR SYSTEM_PULSEAUDIO_MODULE_DIR STREQUAL "")
   set(MODULE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/pulse-${PULSEAUDIO_VERION}/modules")

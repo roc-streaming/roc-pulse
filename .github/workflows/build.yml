@@ -16,7 +16,239 @@ on:
 
 jobs:
 
-  native-build:
+  native-build-download-all:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Build roc-pulse
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make VERBOSE=1
+
+      - name: Install roc-pulse
+        run: |
+          sudo make install
+
+  native-build-system-roc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Download roc-toolkit
+        run: |
+          ./scripts/download_roc.sh ./roc-toolkit
+
+      - name: Build and install roc-toolkit
+        run: |
+          ./scripts/build_and_install_roc.sh ./roc-toolkit /usr/local
+
+      - name: Build roc-pulse
+        run: |
+          set -ex
+          mkdir build
+          cd build
+          cmake .. -DDOWNLOAD_ROC=OFF
+          make VERBOSE=1
+
+      - name: Install roc-pulse
+        run: |
+          sudo make install
+
+  native-build-external-roc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Download roc-toolkit
+        run: |
+          ./scripts/download_roc.sh ./roc-toolkit
+
+      - name: Build and install roc-toolkit
+        run: |
+          ./scripts/build_and_install_roc.sh ./roc-toolkit ./roc-install
+
+      - name: Build roc-pulse
+        run: |
+          set -ex
+          mkdir build
+          cd build
+          cmake .. \
+            -DDOWNLOAD_ROC=OFF \
+            -DROC_INCLUDE_DIR=./roc-install/include \
+            -DROC_LIB_DIR=./roc-install/lib
+          make VERBOSE=1
+
+      - name: Install roc-pulse
+        run: |
+          sudo make install
+
+  native-build-external-pulse-and-system-libtool:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Download pulseaudio
+        run: |
+          ./scripts/download_pulseaudio.sh ./pulseaudio "12.2"
+
+      - name: Build roc-pulse
+        run: |
+          set -ex
+          mkdir build
+          cd build
+          cmake .. \
+            -DDOWNLOAD_PULSEAUDIO=OFF \
+            -DDOWNLOAD_LIBTOOL=OFF \
+            -DPULSEAUDIO_DIR=./pulseaudio \
+            -DPULSEAUDIO_VERSION=12.2
+          make VERBOSE=1
+
+      - name: Install roc-pulse
+        run: |
+          sudo make install
+
+  cross-build-download-all:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - uses: addnab/docker-run-action@v3
+        with:
+          image: rocstreaming/toolchain-aarch64-linux-gnu
+          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          run: |
+            set -ex
+            mkdir build
+            cd build
+            cmake .. -DHOST=aarch64-linux-gnu -DPULSEAUDIO_VERSION=12.2
+            make VERBOSE=1
+
+  cross-build-external-roc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Download roc-toolkit
+        run: |
+          ./scripts/download_roc.sh ./roc-toolkit
+
+      - uses: addnab/docker-run-action@v3
+        with:
+          image: rocstreaming/toolchain-aarch64-linux-gnu
+          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          run: |
+            set -ex
+            ./scripts/build_and_install_roc.sh ./roc-toolkit ./roc-install aarch64-linux-gnu
+            mkdir build
+            cd build
+            cmake .. \
+              -DHOST=aarch64-linux-gnu \
+              -DDOWNLOAD_ROC=OFF \
+              -DROC_INCLUDE_DIR=./roc-install/include \
+              -DROC_LIB_DIR=./roc-install/lib \
+              -DPULSEAUDIO_VERSION=12.2
+            make VERBOSE=1
+
+  cross-build-external-pulse-and-libtool:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Download pulseaudio
+        run: |
+          ./scripts/download_pulseaudio.sh ./pulseaudio "12.2"
+
+      - name: Download libtool
+        run: |
+          ./scripts/download_libtool.sh ./libtool "2.4.6"
+
+      - uses: addnab/docker-run-action@v3
+        with:
+          image: rocstreaming/toolchain-aarch64-linux-gnu
+          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          run: |
+            set -ex
+            mkdir build
+            cd build
+            cmake .. \
+              -DHOST=aarch64-linux-gnu \
+              -DDOWNLOAD_PULSEAUDIO=OFF \
+              -DPULSEAUDIO_DIR=./pulseaudio \
+              -DPULSEAUDIO_VERSION=12.2 \
+              -DDOWNLOAD_LIBTOOL=OFF \
+              -DLIBTOOL_DIR=./libtool
+            make VERBOSE=1
+
+  pulse-versions:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        pulse_version:
+          - "4.0"
+          - "5.0"
+          - "8.0"
+          - "10.0"
+          - "11.1"
+          - "12.2"
+          - "13.99.1"
+          - "14.2"
+
+    name: pulse-versions/${{ matrix.pulse_version }}
+    steps:
+      - name: Checkout roc-pulse
+        uses: actions/checkout@v2
+
+      - name: Install system dependencies
+        run: |
+          ./scripts/install_system_dependencies.sh
+
+      - name: Build roc-pulse
+        run: |
+          set -ex
+          mkdir build
+          cd build
+          cmake .. -DPULSEAUDIO_VERSION=${{ matrix.pulse_version }}
+          make VERBOSE=1
+
+  linux-versions:
     runs-on: ubuntu-latest
 
     strategy:
@@ -32,29 +264,10 @@ jobs:
           - distro: ubuntu-16.04
             image: rocstreaming/env-ubuntu:16.04
 
-          - distro: debian
-            image: rocstreaming/env-debian
-
-          - distro: fedora
-            image: rocstreaming/env-fedora
-
-          - distro: opensuse
-            image: rocstreaming/env-opensuse
-
-          - distro: archlinux
-            image: rocstreaming/env-archlinux
-
-          - distro: alpine
-            image: rocstreaming/env-alpine
-
-    name: native-build/${{ matrix.distro }}
+    name: linux-versions/${{ matrix.distro }}
     steps:
       - name: Checkout roc-pulse
         uses: actions/checkout@v2
-
-      - name: Checkout roc-toolkit
-        run: |
-          ./script/download_roc.sh ./roc-toolkit
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -62,13 +275,13 @@ jobs:
           options: -v ${{ github.workspace }}:/work -w /work -eCI=1
           run: |
             set -ex
-            ./script/build_and_install_roc.sh ./roc-toolkit /usr
             mkdir build
             cd build
             cmake ..
-            make -j2 VERBOSE=1
+            make VERBOSE=1
+            make install
 
-  cross-build:
+  toolchains:
     runs-on: ubuntu-latest
 
     strategy:
@@ -84,14 +297,10 @@ jobs:
           - toolchain: arm-bcm2708hardfp-linux-gnueabi
             image: rocstreaming/toolchain-arm-bcm2708hardfp-linux-gnueabi:gcc-4.7
 
-    name: cross-compile/${{ matrix.toolchain }}
+    name: toolchains/${{ matrix.toolchain }}
     steps:
       - name: Checkout roc-pulse
         uses: actions/checkout@v2
-
-      - name: Checkout roc-toolkit
-        run: |
-          ./script/download_roc.sh ./roc-source
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -99,67 +308,7 @@ jobs:
           options: -v ${{ github.workspace }}:/work -w /work -eCI=1
           run: |
             set -ex
-            ./script/build_and_install_roc.sh ./roc-source ./roc-install ${{ matrix.toolchain }}
             mkdir build
             cd build
-            cmake .. \
-              -DHOST=${{ matrix.toolchain }} \
-              -DROC_INCLUDE_DIR=./roc-install/include \
-              -DROC_LIBRARY_DIR=./roc-install/lib
-            make -j2 VERBOSE=1
-
-  external-pulse:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Install system dependencies
-        run: |
-          ./script/install_system_dependencies.sh
-
-      - name: Build pulseaudio
-        run: |
-          ./script/download_and_build_pulseaudio.sh ./pulse ./pulse
-
-      - name: Build and install roc-toolkit
-        run: |
-          ./script/download_roc.sh ./roc-toolkit
-          ./script/build_and_install_roc.sh ./roc-toolkit /usr
-
-      - name: Build and install roc-pulse
-        run: |
-            mkdir build
-            cd build
-            cmake .. -DPULSEAUDIO_SOURCE_DIR=./pulse
-            make -j2 VERBOSE=1
-            sudo make install
-
-  external-pulse-out-of-source:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Install system dependencies
-        run: |
-          ./script/install_system_dependencies.sh
-
-      - name: Build pulseaudio
-        run: |
-          ./script/download_and_build_pulseaudio.sh ./pulse-source ./pulse-build
-
-      - name: Build and install roc-toolkit
-        run: |
-          ./script/download_roc.sh ./roc-toolkit
-          ./script/build_and_install_roc.sh ./roc-toolkit /usr
-
-      - name: Build and install roc-pulse
-        run: |
-            mkdir build
-            cd build
-            cmake .. \
-              -DPULSEAUDIO_SOURCE_DIR=./pulse-source \
-              -DPULSEAUDIO_BUILD_DIR=./pulse-build
-            make -j2 VERBOSE=1
-            sudo make install
+            cmake .. -DHOST=${{ matrix.toolchain }} -DPULSEAUDIO_VERSION=12.2
+            make VERBOSE=1

@@ -4,7 +4,10 @@ all: build
 build:
 	mkdir -p build
 	cd build && cmake ..
-	make --no-print-directory -C build
+	$(MAKE) --no-print-directory -C build
+
+install:
+	$(MAKE) --no-print-directory -C build install
 
 clean:
 	rm -rf build
