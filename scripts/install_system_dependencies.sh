@@ -2,14 +2,12 @@
 set -euxo pipefail
 
 sudo apt-get install -y \
-    pkg-config \
-    libtool \
-    intltool \
-    m4 \
-    autoconf \
-    automake \
+    gcc g++ \
     make \
+    libtool intltool m4 autoconf automake \
     cmake \
     scons \
+    git \
+    wget \
     python \
     pulseaudio
