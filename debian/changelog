@@ -1,0 +1,18 @@
+roc-pulse (0.1.6~git20210918.77a8ef8-2) unstable; urgency=medium
+
+  [ pi@d0 ]
+  * Set cmake options in override_dh_auto_configure instead of
+    override_dh_auto_build in rules
+  * Comment out redundant statements & sections
+  * Let cmake install files
+  * Remove dh_install file
+
+ --  <pi@d0>  Wed, 02 Feb 2022 00:05:13 +0100
+
+roc-pulse (0.1.6~git20210918.77a8ef8-1) unstable; urgency=medium
+
+  [ pi@p0 ]
+  * Initial release
+  * PulseAudio modules moved over from roc-toolkit
+
+ --  <pi@p0>  Sat, 29 Jan 2022 02:41:44 +0100
