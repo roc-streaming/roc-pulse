@@ -9,5 +9,5 @@ sudo apt-get install -y \
     scons \
     git \
     wget \
-    python \
+    python3 \
     pulseaudio

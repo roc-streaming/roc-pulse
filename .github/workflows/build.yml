@@ -230,6 +230,8 @@ jobs:
           - "12.2"
           - "13.99.1"
           - "14.2"
+          - "15.0"
+          - "16.1"
 
     name: pulse-versions/${{ matrix.pulse_version }}
     steps:
@@ -255,6 +257,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - distro: ubuntu-22.04
+            image: rocstreaming/env-ubuntu:22.04
+
           - distro: ubuntu-20.04
             image: rocstreaming/env-ubuntu:20.04
 
