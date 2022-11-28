@@ -2,7 +2,39 @@
 
 [![Build](https://github.com/roc-streaming/roc-pulse/workflows/build/badge.svg)](https://github.com/roc-streaming/roc-pulse/actions)
 
-This repo is the new home for PulseAudio modules implementing Roc sender and receiver.
+<!-- toc -->
+
+- [What is this?](#what-is-this)
+- [Build instructions](#build-instructions)
+- [Running receiver](#running-receiver)
+- [Running sender](#running-sender)
+- [Setting source or sink name](#setting-source-or-sink-name)
+- [Interoperability](#interoperability)
+- [Troubleshooting](#troubleshooting)
+- [Authors](#authors)
+- [License](#license)
+
+<!-- tocstop -->
+
+## What is this?
+
+This repo provides a set of PulseAudio modules enabling it to use [Roc Toolkit](https://github.com/roc-streaming/roc-toolkit) as a network transport and improve its service quality over an unreliable network such as Wi-Fi.
+
+Advantages over Roc command-line tools:
+
+- Seamless integration into the PulseAudio workflow. The user can connect a local audio stream to a remote audio device using common PulseAudio tools like pavucontrol.
+
+- A bit lower latency. Since Roc is integrated into the PulseAudio server, there is no additional communication step between Roc and PulseAudio server.
+
+Advantages over PulseAudio "native" protocol:
+
+- Better service quaility when the latency is low and the network is unreliable. PulseAudio "native" protocol uses TCP, while Roc uses RTP, which is better suited for real-time communication than TCP-based protocols.
+
+- Compatibility with standard protocols. PulseAudio "native" protocol is PulseAudio-specific, while Roc implements a set of standardized RTP-based protocols.
+
+Advantages over PulseAudio built-in RTP support:
+
+- Better service quaility when the latency is low and the network is unreliable. PulseAudio uses bare RTP, while Roc also employs Forward Erasure Correction extensions.
 
 ## Build instructions
 
@@ -87,6 +119,123 @@ ls -l ../bin
 Commands above will cross-compile PulseAudio modules, as well as download and cross-compile their dependencies. Dependencies will be statically linked into modules.
 
 Here, `HOST` defines toolchain triple of the target system, e.g. `aarch64-linux-gnu`. In this case `aarch64-linux-gnu-gcc` and other tools should be available in `PATH`.
+
+## Running receiver
+
+For the receiving side, use `module-roc-sink-input` PulseAudio module. It creates a PulseAudio sink input that receives samples from Roc sender and passes them to the sink it is connected to. You can then connect it to any audio device.
+
+Roc sink input supports several options:
+
+| option                  | required | default          | description                                                  |
+| ----------------------- | -------- | ---------------- | ------------------------------------------------------------ |
+| sink                    | no       | \<default sink\> | the name of the sink to connect the new sink input to        |
+| sink\_input\_properties | no       | empty            | additional sink input properties                             |
+| resampler\_profile      | no       | medium           | resampler mode, supported values: disable, high, medium, low |
+| sess\_latency\_msec     | no       | 200              | target session latency in milliseconds                       |
+| io\_latency\_msec       | no       | 40               | target playback latency in milliseconds                      |
+| local\_ip               | no       | 0.0.0.0          | local address to bind to                                     |
+| local\_source\_port     | no       | 10001            | local port for source (audio) packets                        |
+| local\_repair\_port     | no       | 10002            | local port for repair (FEC) packets                          |
+
+Here is how you can create a Roc sink input from command line:
+
+```
+pactl load-module module-roc-sink-input
+```
+
+Alternatively, you can add this line to `/etc/pulse/default.pa` to create a Roc sink input automatically at PulseAudio start:
+
+```
+load-module module-roc-sink-input
+```
+
+You can then connect the Roc sink input to an audio device (i.e. a sink) via command line:
+
+```
+# determine Roc sink-input number
+pactl list sink-inputs
+
+# connect Roc sink-input to a sink
+pactl move-sink-input <roc_sink_input_number> <sink>
+```
+
+Or via the `pavucontrol` graphical tool:
+
+![image](docs//roc_pulse_receiver.png)
+
+## Running sender
+
+For the sending side, use `module-roc-sink` PulseAudio module. It creates a PulseAudio sink that sends samples written to it to a preconfigured receiver address. You can then connect an audio stream of any running application to that sink, or make it the default sink.
+
+Roc sink supports several options:
+
+| option               | required | default     | description                                     |
+| -------------------- | -------- | ----------- | ----------------------------------------------- |
+| sink\_name           | no       | roc\_sender | the name of the new sink                        |
+| sink\_properties     | no       | empty       | additional sink properties                      |
+| remote\_ip           | yes      | no          | remote receiver address                         |
+| remote\_source\_port | no       | 10001       | remote receiver port for source (audio) packets |
+| remote\_repair\_port | no       | 10002       | remote receiver port for repair (FEC) packets   |
+
+Here is how you can create a Roc sink from command line:
+
+```
+pactl load-module module-roc-sink remote_ip=<receiver_ip>
+```
+
+Alternatively, you can add this line to `/etc/pulse/default.pa` to create a Roc sink automatically at PulseAudio start:
+
+```
+load-module module-roc-sink remote_ip=<receiver_ip>
+```
+
+You can then connect an audio stream (i.e. a sink input) to the Roc sink via command line:
+
+```
+pactl move-sink-input <sink_input_number> roc_sender
+```
+
+Or via the `pavucontrol` graphical tool:
+
+![image](docs/roc_pulse_sender.png)
+
+## Setting source or sink name
+
+PulseAudio sinks and sink inputs have name and description. Name is usually used when the sink or sink input is referenced from command-line tools or configuration files, and description is shown in the GUI.
+
+Sink name and description can be configured via `sink_name` module argument and `device.description` sink property set by `sink_properties` module argument:
+
+```
+pactl load-module module-roc-sink remote_ip=192.168.1.38 \
+  sink_name=my_name sink_properties=device.description=My-Description
+```
+
+Sink input name and description can be configured via `sink_input_name` module argument and `media.name` sink input property set by
+`sink_input_properties` module argument:
+
+```
+pactl load-module module-roc-sink-input \
+  sink_input_name=my_name sink_input_properties=media.name=My-Description
+```
+
+## Interoperability
+
+These PulseAudio modules are interoperable with Roc library command line tools, i.e.:
+
+- as a sender, you can use either `roc_sender` from the C library, `roc-send` command line tool, or `module-roc-sink`
+- as a receiver, you can use either `roc_receiver` from the C library, `roc-recv` command line tool, or `module-roc-sink-input`
+
+## Troubleshooting
+
+First, run PulseAudio server in verbose mode, both on sending and receiving sides:
+
+```
+pulseaudio -vvv
+```
+
+Among other things, you should find some messages from Roc sink and sink-input there, which may give some idea about what's going wrong.
+
+Second, you can try to replace sender, receiver, or both with Roc command line tools to determine whether the issue is specific to PulseAudio modules or not.
 
 ## Authors
 
