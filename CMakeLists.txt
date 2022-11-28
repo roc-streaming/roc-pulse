@@ -14,16 +14,9 @@ option(DOWNLOAD_ROC "automatically download and build roc-toolkit" ON)
 
 set(DEFAULT_PULSEAUDIO_VERSION "")
 
-if(NOT CMAKE_CROSSCOMPILING)
-  include("cmake/detect_pulseaudio.cmake")
-
-  if(NOT SYSTEM_PULSEAUDIO_VERSION STREQUAL "")
-    set(DEFAULT_PULSEAUDIO_VERSION "${SYSTEM_PULSEAUDIO_VERSION}")
-  endif()
-endif()
-
-set(PULSEAUDIO_VERSION "${DEFAULT_PULSEAUDIO_VERSION}" CACHE STRING "pulseaudio version")
+set(PULSEAUDIO_VERSION "" CACHE STRING "pulseaudio version")
 set(PULSEAUDIO_DIR "" CACHE STRING "directory with pulseaudio source code")
+set(PULSEAUDIO_MODULE_DIR "" CACHE STRING "directory where to install pulseaudio modules")
 
 set(LIBTOOL_VERSION "2.4.6" CACHE STRING "libtool version")
 set(LIBTOOL_DIR "" CACHE STRING "directory with libtool source code")
@@ -31,10 +24,35 @@ set(LIBTOOL_DIR "" CACHE STRING "directory with libtool source code")
 set(ROC_INCLUDE_DIR "" CACHE STRING "roc toolkit include directory")
 set(ROC_LIB_DIR "" CACHE STRING "roc toolkit library directory")
 
-if(PULSEAUDIO_VERSION STREQUAL "")
+if(NOT PULSEAUDIO_VERSION)
+  if(NOT PULSEAUDIO_DIR)
+    if(NOT CMAKE_CROSSCOMPILING)
+      include("cmake/detect_system_pulseaudio_version.cmake")
+      if(SYSTEM_PULSEAUDIO_VERSION)
+        set(PULSEAUDIO_VERSION "${SYSTEM_PULSEAUDIO_VERSION}")
+      endif()
+    endif()
+  else()
+    include("cmake/detect_source_pulseaudio_version.cmake")
+    if(SOURCE_PULSEAUDIO_VERSION)
+      set(PULSEAUDIO_VERSION "${SOURCE_PULSEAUDIO_VERSION}")
+    endif()
+  endif()
+endif()
+
+if(NOT PULSEAUDIO_VERSION)
   message(FATAL_ERROR "can't auto-detect PULSEAUDIO_VERSION, define it manually")
 else()
   message(STATUS "Using PULSEAUDIO_VERSION - ${PULSEAUDIO_VERSION}")
+endif()
+
+if(NOT PULSEAUDIO_MODULE_DIR)
+  if(CMAKE_CROSSCOMPILING OR NOT SYSTEM_PULSEAUDIO_MODULE_DIR)
+    set(PULSEAUDIO_MODULE_DIR "${CMAKE_INSTALL_PREFIX}/lib/pulse-${PULSEAUDIO_VERSION}/modules")
+  else()
+    set(PULSEAUDIO_MODULE_DIR "${SYSTEM_PULSEAUDIO_MODULE_DIR}")
+  endif()
+  message(STATUS "Using PULSEAUDIO_MODULE_DIR - ${PULSEAUDIO_MODULE_DIR}")
 endif()
 
 if(DOWNLOAD_PULSEAUDIO)
@@ -160,16 +178,10 @@ set(ALL_MODULES
 
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
 
-if(CMAKE_CROSSCOMPILING OR SYSTEM_PULSEAUDIO_MODULE_DIR STREQUAL "")
-  set(MODULE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib/pulse-${PULSEAUDIO_VERION}/modules")
-else()
-  set(MODULE_INSTALL_DIR "${SYSTEM_PULSEAUDIO_MODULE_DIR}")
-endif()
-
 foreach(MODULE IN LISTS ALL_MODULES)
   install(
     FILES $<TARGET_FILE:${MODULE}>
-    DESTINATION "${MODULE_INSTALL_DIR}"
+    DESTINATION "${PULSEAUDIO_MODULE_DIR}"
     )
 endforeach()
 
