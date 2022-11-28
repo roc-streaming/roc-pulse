@@ -1,7 +1,7 @@
 /*
  * This file is part of Roc PulseAudio integration.
  *
- * Copyright (c) 2017 Roc authors
+ * Copyright (c) 2017 Roc Streaming authors
  *
  * Licensed under GNU Lesser General Public License 2.1 or any later version.
  */
