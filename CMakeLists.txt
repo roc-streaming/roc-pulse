@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0.0)
 
+cmake_policy(SET CMP0135 NEW)
+
 project(roc_pulse C CXX)
 
 set(HOST "" CACHE STRING "target host triplet, e.g. aarch64-linux-gnu")
