@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.0)
 
-cmake_policy(SET CMP0135 NEW)
+if((CMAKE_MAJOR_VERSION GREATER 3) OR
+    ((CMAKE_MAJOR_VERSION EQUAL 3) AND NOT (CMAKE_MINOR_VERSION LESS 24)))
+  cmake_policy(SET CMP0135 NEW)
+endif()
 
 project(roc_pulse C CXX)
 
@@ -11,8 +14,6 @@ include("cmake/setup_toolchain.cmake")
 option(DOWNLOAD_PULSEAUDIO "automatically download pulseaudio" ON)
 option(DOWNLOAD_LIBTOOL "automatically download libtool (ltdl)" ON)
 option(DOWNLOAD_ROC "automatically download and build roc-toolkit" ON)
-
-set(DEFAULT_PULSEAUDIO_VERSION "")
 
 set(PULSEAUDIO_VERSION "" CACHE STRING "pulseaudio version")
 set(PULSEAUDIO_DIR "" CACHE STRING "directory with pulseaudio source code")
@@ -41,10 +42,14 @@ if(NOT PULSEAUDIO_VERSION)
 endif()
 
 if(NOT PULSEAUDIO_VERSION)
-  message(FATAL_ERROR "can't auto-detect PULSEAUDIO_VERSION, define it manually")
+  message(FATAL_ERROR "Can't auto-detect PULSEAUDIO_VERSION, define it manually")
 else()
   message(STATUS "Using PULSEAUDIO_VERSION - ${PULSEAUDIO_VERSION}")
 endif()
+
+string(REPLACE "." ";" PULSEAUDIO_VERSION_PARTS ${PULSEAUDIO_VERSION})
+list(GET PULSEAUDIO_VERSION_PARTS 0 PULSEAUDIO_VERSION_MAJOR)
+list(GET PULSEAUDIO_VERSION_PARTS 1 PULSEAUDIO_VERSION_MINOR)
 
 if(NOT PULSEAUDIO_MODULE_DIR)
   if(CMAKE_CROSSCOMPILING OR NOT SYSTEM_PULSEAUDIO_MODULE_DIR)
@@ -59,7 +64,7 @@ if(DOWNLOAD_PULSEAUDIO)
   include("cmake/download_pulseaudio.cmake")
 else()
   if(PULSEAUDIO_DIR STREQUAL "")
-    message(FATAL_ERROR "if DOWNLOAD_PULSEAUDIO is OFF, PULSEAUDIO_DIR should be defined")
+    message(FATAL_ERROR "If DOWNLOAD_PULSEAUDIO is OFF, PULSEAUDIO_DIR should be defined")
   endif()
 
   get_filename_component(PULSEAUDIO_DIR "${PULSEAUDIO_DIR}" ABSOLUTE)
@@ -73,7 +78,7 @@ endif()
 
 if(DOWNLOAD_LIBTOOL)
   if(LIBTOOL_VERSION STREQUAL "")
-    message(FATAL_ERROR "if DOWNLOAD_LIBTOOL is ON, LIBTOOL_VERSION should be defined")
+    message(FATAL_ERROR "If DOWNLOAD_LIBTOOL is ON, LIBTOOL_VERSION should be defined")
   else()
     message(STATUS "Using LIBTOOL_VERSION - ${LIBTOOL_VERSION}")
   endif()
@@ -107,6 +112,12 @@ else()
   endif()
 
   link_libraries("roc")
+endif()
+
+if((PULSEAUDIO_VERSION_MAJOR GREATER 14) OR
+    ((PULSEAUDIO_VERSION_MAJOR EQUAL 14) AND
+      NOT (PULSEAUDIO_VERSION_MINOR LESS 99)))
+  include("cmake/setup_pulseaudio.cmake")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
