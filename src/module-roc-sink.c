@@ -276,13 +276,15 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (roc_sender_connect(u->sender, ROC_INTERFACE_AUDIO_SOURCE, u->remote_source_endp)
+    if (roc_sender_connect(u->sender, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_SOURCE,
+                           u->remote_source_endp)
         != 0) {
         pa_log("can't connect roc sender to remote address");
         goto error;
     }
 
-    if (roc_sender_connect(u->sender, ROC_INTERFACE_AUDIO_REPAIR, u->remote_repair_endp)
+    if (roc_sender_connect(u->sender, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
+                           u->remote_repair_endp)
         != 0) {
         pa_log("can't connect roc sender to remote address");
         goto error;

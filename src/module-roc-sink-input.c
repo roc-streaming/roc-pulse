@@ -234,13 +234,15 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (roc_receiver_bind(u->receiver, ROC_INTERFACE_AUDIO_SOURCE, u->local_source_endp)
+    if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_SOURCE,
+                          u->local_source_endp)
         != 0) {
         pa_log("can't connect roc receiver to local address");
         goto error;
     }
 
-    if (roc_receiver_bind(u->receiver, ROC_INTERFACE_AUDIO_REPAIR, u->local_repair_endp)
+    if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
+                          u->local_repair_endp)
         != 0) {
         pa_log("can't connect roc receiver to local address");
         goto error;
