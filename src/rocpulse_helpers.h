@@ -28,19 +28,19 @@
 void rocpulse_log_handler(roc_log_level level, const char* module, const char* message);
 
 int rocpulse_parse_endpoint(roc_endpoint** endp,
-                         roc_protocol proto,
-                         pa_modargs* args,
-                         const char* ip_arg,
-                         const char* default_ip_arg,
-                         const char* port_arg,
-                         const char* default_port_arg);
+                            roc_protocol proto,
+                            pa_modargs* args,
+                            const char* ip_arg,
+                            const char* default_ip_arg,
+                            const char* port_arg,
+                            const char* default_port_arg);
 
 int rocpulse_parse_duration_msec(unsigned long long* out,
-                              unsigned long out_base,
-                              pa_modargs* args,
-                              const char* arg_name,
-                              const char* arg_default);
+                                 unsigned long out_base,
+                                 pa_modargs* args,
+                                 const char* arg_name,
+                                 const char* arg_default);
 
 int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
-                                  pa_modargs* args,
-                                  const char* arg_name);
+                                     pa_modargs* args,
+                                     const char* arg_name);

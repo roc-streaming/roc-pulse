@@ -7,11 +7,11 @@
  */
 
 /* system headers */
-#include <stdlib.h>
-#include <limits.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <limits.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <sys/socket.h>
 
 /* local headers */
 #include "rocpulse_helpers.h"
@@ -37,12 +37,12 @@ void rocpulse_log_handler(roc_log_level level, const char* module, const char* m
 }
 
 int rocpulse_parse_endpoint(roc_endpoint** endp,
-                         roc_protocol proto,
-                         pa_modargs* args,
-                         const char* ip_arg,
-                         const char* default_ip_arg,
-                         const char* port_arg,
-                         const char* default_port_arg) {
+                            roc_protocol proto,
+                            pa_modargs* args,
+                            const char* ip_arg,
+                            const char* default_ip_arg,
+                            const char* port_arg,
+                            const char* default_port_arg) {
     if (roc_endpoint_allocate(endp) != 0) {
         pa_log("can't allocate endpoint");
         return -1;
@@ -92,10 +92,10 @@ int rocpulse_parse_endpoint(roc_endpoint** endp,
 }
 
 int rocpulse_parse_duration_msec(unsigned long long* out,
-                              unsigned long out_base,
-                              pa_modargs* args,
-                              const char* arg_name,
-                              const char* arg_default) {
+                                 unsigned long out_base,
+                                 pa_modargs* args,
+                                 const char* arg_name,
+                                 const char* arg_default) {
     const char* str = pa_modargs_get_value(args, arg_name, arg_default);
 
     char* end = NULL;
@@ -115,8 +115,8 @@ int rocpulse_parse_duration_msec(unsigned long long* out,
 }
 
 int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
-                                  pa_modargs* args,
-                                  const char* arg_name) {
+                                     pa_modargs* args,
+                                     const char* arg_name) {
     const char* str = pa_modargs_get_value(args, arg_name, "");
 
     if (!str || !*str) {

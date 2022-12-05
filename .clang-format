@@ -1,0 +1,20 @@
+# https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+#
+---
+BasedOnStyle: Webkit # http://www.webkit.org/coding/coding-style.html
+
+UseTab: Never
+IndentWidth: 4
+ColumnLimit: 90
+
+MaxEmptyLinesToKeep: 1
+PenaltyBreakComment: 0
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+BinPackArguments: true
+BinPackParameters: false
+
+AlignAfterOpenBracket: true
+AlignTrailingComments: true
+
+BreakBeforeBraces: Attach

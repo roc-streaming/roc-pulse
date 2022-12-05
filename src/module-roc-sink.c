@@ -34,12 +34,11 @@ PA_MODULE_AUTHOR("Roc Streaming authors");
 PA_MODULE_DESCRIPTION("Write samples using Roc sender");
 PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
-PA_MODULE_USAGE(
-        "sink_name=<name for the sink> "
-        "sink_properties=<properties for the sink> "
-        "remote_ip=<remote receiver ip> "
-        "remote_source_port=<remote receiver port for source packets> "
-        "remote_repair_port=<remote receiver port for repair packets>");
+PA_MODULE_USAGE("sink_name=<name for the sink> "
+                "sink_properties=<properties for the sink> "
+                "remote_ip=<remote receiver ip> "
+                "remote_source_port=<remote receiver port for source packets> "
+                "remote_repair_port=<remote receiver port for repair packets>");
 
 struct roc_sink_userdata {
     pa_module* module;
@@ -58,12 +57,12 @@ struct roc_sink_userdata {
     roc_sender* sender;
 };
 
-static const char* const roc_sink_modargs[] = {
-    "sink_name",
-    "sink_properties",
-    "remote_ip",
-    "remote_source_port",
-    "remote_repair_port",
+static const char* const roc_sink_modargs[] = { //
+    "sink_name",                                //
+    "sink_properties",                          //
+    "remote_ip",                                //
+    "remote_source_port",                       //
+    "remote_repair_port",                       //
     NULL
 };
 
@@ -90,7 +89,7 @@ static void process_samples(struct roc_sink_userdata* u, uint64_t expected_bytes
         pa_sink_render(u->sink, 0, &chunk);
 
         /* start reading chunk's memblock */
-        char *buf = pa_memblock_acquire(chunk.memblock);
+        char* buf = pa_memblock_acquire(chunk.memblock);
 
         /* prepare audio frame */
         roc_frame frame;
@@ -112,7 +111,6 @@ static void process_samples(struct roc_sink_userdata* u, uint64_t expected_bytes
         /* return memblock to the pool */
         pa_memblock_unref(chunk.memblock);
     }
-
 }
 
 static void process_rewind(struct roc_sink_userdata* u) {
@@ -124,22 +122,14 @@ static void process_rewind(struct roc_sink_userdata* u) {
 static void process_error(struct roc_sink_userdata* u) {
     pa_assert(u);
 
-    pa_asyncmsgq_post(
-        u->thread_mq.outq,
-        PA_MSGOBJECT(u->module->core),
-        PA_CORE_MESSAGE_UNLOAD_MODULE,
-        u->module,
-        0,
-        NULL,
-        NULL);
+    pa_asyncmsgq_post(u->thread_mq.outq, PA_MSGOBJECT(u->module->core),
+                      PA_CORE_MESSAGE_UNLOAD_MODULE, u->module, 0, NULL, NULL);
 
-    pa_asyncmsgq_wait_for(
-        u->thread_mq.inq,
-        PA_MESSAGE_SHUTDOWN);
+    pa_asyncmsgq_wait_for(u->thread_mq.inq, PA_MESSAGE_SHUTDOWN);
 }
 
 static void thread_loop(void* arg) {
-    struct roc_sink_userdata *u = arg;
+    struct roc_sink_userdata* u = arg;
     pa_assert(u);
 
     pa_thread_mq_install(&u->thread_mq);
@@ -162,11 +152,10 @@ static void thread_loop(void* arg) {
             if (start_time == 0) {
                 start_time = now_time;
                 next_time = start_time + poll_interval;
-            }
-            else {
+            } else {
                 while (now_time >= next_time) {
-                    uint64_t expected_bytes =
-                        pa_usec_to_bytes(next_time - start_time, &u->sink->sample_spec);
+                    uint64_t expected_bytes
+                        = pa_usec_to_bytes(next_time - start_time, &u->sink->sample_spec);
 
                     /* render samples from sink inputs and write them to output file */
                     process_samples(u, expected_bytes);
@@ -178,8 +167,7 @@ static void thread_loop(void* arg) {
 
             /* schedule set next rendering tick */
             pa_rtpoll_set_timer_absolute(u->rtpoll, next_time);
-        }
-        else {
+        } else {
             /* sleep until state change */
             start_time = 0;
             next_time = 0;
@@ -227,14 +215,14 @@ int pa__init(pa_module* m) {
     pa_channel_map_init_stereo(&channel_map);
 
     /* get module arguments (key-value list passed to load-module) */
-    pa_modargs *args;
+    pa_modargs* args;
     if (!(args = pa_modargs_new(m->argument, roc_sink_modargs))) {
         pa_log("failed to parse module arguments");
         goto error;
     }
 
     /* create and initialize module-specific data */
-    struct roc_sink_userdata *u = pa_xnew0(struct roc_sink_userdata, 1);
+    struct roc_sink_userdata* u = pa_xnew0(struct roc_sink_userdata, 1);
     pa_assert(u);
     m->userdata = u;
 
@@ -242,16 +230,16 @@ int pa__init(pa_module* m) {
     u->rtpoll = pa_rtpoll_new();
     pa_thread_mq_init(&u->thread_mq, m->core->mainloop, u->rtpoll);
 
-    if (rocpulse_parse_endpoint(&u->remote_source_endp, ROCPULSE_DEFAULT_SOURCE_PROTO, args,
-                             "remote_ip", "", "remote_source_port",
-                             ROCPULSE_DEFAULT_SOURCE_PORT)
+    if (rocpulse_parse_endpoint(&u->remote_source_endp, ROCPULSE_DEFAULT_SOURCE_PROTO,
+                                args, "remote_ip", "", "remote_source_port",
+                                ROCPULSE_DEFAULT_SOURCE_PORT)
         < 0) {
         goto error;
     }
 
-    if (rocpulse_parse_endpoint(&u->remote_repair_endp, ROCPULSE_DEFAULT_REPAIR_PROTO, args,
-                             "remote_ip", "", "remote_repair_port",
-                             ROCPULSE_DEFAULT_REPAIR_PORT)
+    if (rocpulse_parse_endpoint(&u->remote_repair_endp, ROCPULSE_DEFAULT_REPAIR_PROTO,
+                                args, "remote_ip", "", "remote_repair_port",
+                                ROCPULSE_DEFAULT_REPAIR_PORT)
         < 0) {
         goto error;
     }
@@ -295,19 +283,15 @@ int pa__init(pa_module* m) {
     pa_sink_new_data_init(&data);
     data.driver = "roc_sink";
     data.module = m;
-    pa_sink_new_data_set_name(
-        &data,
-        pa_modargs_get_value(args, "sink_name", "roc_sender"));
+    pa_sink_new_data_set_name(&data,
+                              pa_modargs_get_value(args, "sink_name", "roc_sender"));
     pa_sink_new_data_set_sample_spec(&data, &sample_spec);
     pa_sink_new_data_set_channel_map(&data, &channel_map);
 
     pa_proplist_sets(data.proplist, PA_PROP_DEVICE_DESCRIPTION, "Roc Sender");
 
-    if (pa_modargs_get_proplist(
-            args,
-            "sink_properties",
-            data.proplist,
-            PA_UPDATE_REPLACE) < 0) {
+    if (pa_modargs_get_proplist(args, "sink_properties", data.proplist, PA_UPDATE_REPLACE)
+        < 0) {
         pa_log("invalid sink properties");
         pa_sink_new_data_done(&data);
         goto error;
@@ -352,7 +336,7 @@ error:
 void pa__done(pa_module* m) {
     pa_assert(m);
 
-    struct roc_sink_userdata *u = m->userdata;
+    struct roc_sink_userdata* u = m->userdata;
     if (!u) {
         return;
     }
