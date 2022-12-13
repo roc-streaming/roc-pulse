@@ -25,7 +25,7 @@
 #define ROCPULSE_DEFAULT_SOURCE_PROTO ROC_PROTO_RTP_RS8M_SOURCE
 #define ROCPULSE_DEFAULT_REPAIR_PROTO ROC_PROTO_RS8M_REPAIR
 
-void rocpulse_log_handler(roc_log_level level, const char* module, const char* message);
+void rocpulse_log_handler(const roc_log_message* message, void* argument);
 
 int rocpulse_parse_endpoint(roc_endpoint** endp,
                             roc_protocol proto,

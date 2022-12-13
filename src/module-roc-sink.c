@@ -203,7 +203,7 @@ int pa__init(pa_module* m) {
 
     /* setup logs */
     roc_log_set_level(ROC_LOG_DEBUG);
-    roc_log_set_handler(rocpulse_log_handler);
+    roc_log_set_handler(rocpulse_log_handler, NULL);
 
     /* prepare sample spec and channel map used in this sink */
     pa_sample_spec sample_spec;

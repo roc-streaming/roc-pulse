@@ -16,22 +16,24 @@
 /* local headers */
 #include "rocpulse_helpers.h"
 
-void rocpulse_log_handler(roc_log_level level, const char* module, const char* message) {
-    switch (level) {
+void rocpulse_log_handler(const roc_log_message* message, void* argument) {
+    (void)argument;
+
+    switch (message->level) {
     case ROC_LOG_NONE:
         return;
 
     case ROC_LOG_ERROR:
-        pa_log_level_meta(PA_LOG_ERROR, module, -1, NULL, "%s", message);
+        pa_log_level_meta(PA_LOG_ERROR, message->module, -1, NULL, "%s", message->text);
         return;
 
     case ROC_LOG_INFO:
-        pa_log_level_meta(PA_LOG_INFO, module, -1, NULL, "%s", message);
+        pa_log_level_meta(PA_LOG_INFO, message->module, -1, NULL, "%s", message->text);
         return;
 
     case ROC_LOG_DEBUG:
     case ROC_LOG_TRACE:
-        pa_log_level_meta(PA_LOG_DEBUG, module, -1, NULL, "%s", message);
+        pa_log_level_meta(PA_LOG_DEBUG, message->module, -1, NULL, "%s", message->text);
         return;
     }
 }
