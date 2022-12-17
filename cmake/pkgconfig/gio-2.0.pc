@@ -1,0 +1,5 @@
+Name: gio-2.0
+Description: fake .pc for meson setup
+Version: 2.26.0
+Cflags:
+Libs:

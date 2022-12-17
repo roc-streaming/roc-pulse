@@ -1,9 +1,9 @@
 set(PULSEAUDIO_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/pulsebuild")
 
-# This command runs meson setup to generate pulse/version.h
+# This command runs "meson setup" to generate pulse/version.h
 # We don't actually build PulseAudio
 # We don't bother whether we're cross-compiling or not,
-# because the generated header is not affected by it
+# because the generated header is the same in both cases.
 ExternalProject_Add(pulsebuild
   SOURCE_DIR "${PULSEAUDIO_BUILD_DIR}"
   BINARY_DIR "${PULSEAUDIO_BUILD_DIR}"
@@ -11,11 +11,14 @@ ExternalProject_Add(pulsebuild
   DOWNLOAD_COMMAND ""
   PATCH_COMMAND ""
   CONFIGURE_COMMAND
-    meson setup "${PULSEAUDIO_BUILD_DIR}" "${PULSEAUDIO_DIR}"
-      -Ddoxygen=false
-      -Dman=false
-      -Dtests=false
-      -Ddatabase=simple
+    # Use fake .pc files to suppress dependency search.
+    ${CMAKE_COMMAND} -E env "PKG_CONFIG_PATH=${PROJECT_SOURCE_DIR}/cmake/pkgconfig"
+      meson setup "${PULSEAUDIO_BUILD_DIR}" "${PULSEAUDIO_DIR}"
+        -Ddaemon=false
+        -Ddoxygen=false
+        -Dman=false
+        -Dtests=false
+        -Ddatabase=simple
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
   TEST_COMMAND ""

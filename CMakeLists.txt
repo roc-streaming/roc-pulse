@@ -117,6 +117,7 @@ endif()
 if((PULSEAUDIO_VERSION_MAJOR GREATER 14) OR
     ((PULSEAUDIO_VERSION_MAJOR EQUAL 14) AND
       NOT (PULSEAUDIO_VERSION_MINOR LESS 99)))
+  set(SETUP_PULSEAUDIO 1)
   include("cmake/setup_pulseaudio.cmake")
 endif()
 
@@ -153,6 +154,12 @@ include_directories("src")
 add_library(rocpulse_helpers OBJECT
   "src/rocpulse_helpers.c"
   )
+
+if(SETUP_PULSEAUDIO)
+  add_dependencies(rocpulse_helpers
+    pulsebuild
+    )
+endif()
 
 if(DOWNLOAD_PULSEAUDIO)
   add_dependencies(rocpulse_helpers

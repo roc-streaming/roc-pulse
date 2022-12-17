@@ -1,0 +1,5 @@
+Name: sndfile
+Description: fake .pc for meson setup
+Version: 1.0.20
+Cflags:
+Libs:
