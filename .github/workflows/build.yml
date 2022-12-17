@@ -1,8 +1,6 @@
 name: "build"
 
 on:
-  workflow_dispatch:
-
   push:
     branches:
       - main
@@ -11,8 +9,14 @@ on:
 
   pull_request:
 
+  workflow_dispatch:
+
   schedule:
     - cron: '0 0 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
@@ -21,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install system dependencies
         run: |
@@ -43,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install system dependencies
         run: |
@@ -74,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install system dependencies
         run: |
@@ -107,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install system dependencies
         run: |
@@ -138,7 +142,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -156,7 +160,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install system dependencies
         run: |
@@ -188,7 +192,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download pulseaudio
         run: |
@@ -221,34 +225,52 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        pulse_version:
-          - "4.0"
-          - "5.0"
-          - "8.0"
-          - "10.0"
-          - "11.1"
-          - "12.2"
-          - "13.99.1"
-          - "14.2"
-          - "15.0"
-          - "16.1"
+        pulse_ver:
+          - '4.0'
+          - '5.0'
+          - '8.0'
+          - '10.0'
+          - '11.1'
+          - '12.2'
+          - '13.99.1'
+          - '14.2'
+          - '15.0'
+          - '16.1'
+        mode:
+          - native
+          - cross-compile
 
-    name: pulse-versions/${{ matrix.pulse_version }}
+    name: pulse-versions/${{ matrix.pulse_ver }}/${{ matrix.mode }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Install system dependencies
+      - name: Install native dependencies
+        if: ${{ matrix.mode == 'native' }}
         run: |
           ./scripts/install_system_dependencies.sh
 
-      - name: Build roc-pulse
+      - name: Native build
+        if: ${{ matrix.mode == 'native' }}
         run: |
           set -ex
           mkdir build
           cd build
-          cmake .. -DPULSEAUDIO_VERSION=${{ matrix.pulse_version }}
+          cmake .. -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
           make VERBOSE=1
+
+      - name: Cross build
+        if: ${{ matrix.mode != 'native' }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: rocstreaming/toolchain-aarch64-linux-gnu
+          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          run: |
+            set -ex
+            mkdir build
+            cd build
+            cmake .. -DHOST=aarch64-linux-gnu -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
+            make VERBOSE=1
 
   linux-versions:
     runs-on: ubuntu-latest
@@ -272,7 +294,7 @@ jobs:
     name: linux-versions/${{ matrix.distro }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -295,17 +317,24 @@ jobs:
         include:
           - toolchain: aarch64-linux-gnu
             image: rocstreaming/toolchain-aarch64-linux-gnu:gcc-7.4
+            pulse_ver: '15.99.1'
+
+          - toolchain: aarch64-linux-gnu
+            image: rocstreaming/toolchain-aarch64-linux-gnu:gcc-7.4
+            pulse_ver: '12.2'
 
           - toolchain: arm-linux-gnueabihf
             image: rocstreaming/toolchain-arm-linux-gnueabihf:gcc-4.9
+            pulse_ver: '10.0'
 
           - toolchain: arm-bcm2708hardfp-linux-gnueabi
             image: rocstreaming/toolchain-arm-bcm2708hardfp-linux-gnueabi:gcc-4.7
+            pulse_ver: '8.0'
 
     name: toolchains/${{ matrix.toolchain }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -315,5 +344,5 @@ jobs:
             set -ex
             mkdir build
             cd build
-            cmake .. -DHOST=${{ matrix.toolchain }} -DPULSEAUDIO_VERSION=12.2
+            cmake .. -DHOST=${{ matrix.toolchain }} -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
             make VERBOSE=1
