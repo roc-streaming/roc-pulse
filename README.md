@@ -1,6 +1,6 @@
 # PulseAudio modules for Roc Toolkit
 
-[![Build](https://github.com/roc-streaming/roc-pulse/workflows/build/badge.svg)](https://github.com/roc-streaming/roc-pulse/actions)
+[![Build](https://github.com/roc-streaming/roc-pulse/workflows/build/badge.svg)](https://github.com/roc-streaming/roc-pulse/actions) [![GitHub release](https://img.shields.io/github/release/roc-streaming/roc-pulse.svg)](https://github.com/roc-streaming/roc-pulse/releases) [![Matrix chat](https://matrix.to/img/matrix-badge.svg)](https://app.element.io/#/room/#roc-streaming:matrix.org)
 
 <!-- toc -->
 
