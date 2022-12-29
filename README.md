@@ -64,7 +64,7 @@ Then build PulseAudio modules:
 make
 ```
 
-And then install them into the system:
+And then install modules into the system:
 
 ```
 sudo make install
@@ -78,7 +78,7 @@ First, download, build and install Roc Toolkit into the system as described on [
 
 Then download and unpack PulseAudio source code [from here](https://freedesktop.org/software/pulseaudio/releases/). There is no need to configure and build it, only source code is needed.
 
-> PulseAudio doesn't provide official API for out-of-tree modules. This is the reason why we need full PulseAudio source code to build modules.
+> Note: PulseAudio doesn't provide official API for out-of-tree modules. This is the reason why we need full PulseAudio source code to build modules.
 
 > Note: PulseAudio source code should have **exactly the same version** as the actual PulseAudio daemon which will be used to load modules.
 
@@ -87,9 +87,9 @@ Optionally, download and unpack [libtool](https://gnu.askapache.com/libtool/). A
 Then you can build and install modules:
 
 ```
-mkdir build
-cd build
-cmake .. \
+mkdir build/native
+cd build/native
+cmake ../.. \
   -DDOWNLOAD_ROC=OFF \
   -DDOWNLOAD_PULSEAUDIO=OFF \
   -DDOWNLOAD_LIBTOOL=OFF \
@@ -105,21 +105,54 @@ If you've installed Roc Toolkit to non-standard directory, you can use `-DROC_IN
 
 ### Cross-compilation
 
-You can use [standard instructions](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html) for cross-compiling using CMake.
-
-For simple cases, it's also possible to do everything automaticaly by specifying just two options:
+For simple cases, you can do everything automaticaly by specifying just two environment variables:
 
 ```
-mkdir build
-cd build
-cmake .. -DHOST=<...> -DPULSEAUDIO_VERSION=<...>
+TOOLCHAIN_PREFIX=<...> PULSEAUDIO_VERSION=<...> make
+```
+
+For more granular configuration, you can invoke CMake directly:
+
+```
+mkdir build/cross
+cd build/cross
+cmake ../.. -DTOOLCHAIN_PREFIX=<...> -DPULSEAUDIO_VERSION=<...>
 make VERBOSE=1
-ls -l ../bin
 ```
 
-Commands above will cross-compile PulseAudio modules, as well as download and cross-compile their dependencies. Dependencies will be statically linked into modules.
+Commands above will cross-compile PulseAudio modules, as well as download and cross-compile their dependencies. Dependencies will be statically linked into modules. Modules will be installed into `./bin`.
 
-Here, `HOST` defines toolchain triple of the target system, e.g. `aarch64-linux-gnu`. In this case `aarch64-linux-gnu-gcc` and other tools should be available in `PATH`.
+In these commands, `TOOLCHAIN_PREFIX` defines toolchain triple of the target system, e.g. `aarch64-linux-gnu`. In this case `aarch64-linux-gnu-gcc` and other tools should be available in `PATH`.
+
+For more complicated cases, refer to [standard instructions](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html) for cross-compiling using CMake.
+
+### Prebuilt toolchains
+
+You can use one of our docker images with prebuilt cross-compilation toolchains. The commands below will cross-compile PulseAudio modules and install them to `./bin`.
+
+Raspberry Pi (64-bit):
+
+```
+docker run -t --rm -u "${UID}" -v "${PWD}:${PWD}" -w "${PWD}" \
+  rocstreaming/toolchain-aarch64-linux-gnu \
+    env TOOLCHAIN_PREFIX=aarch64-linux-gnu PULSEAUDIO_VERSION=<...> make
+```
+
+Raspberry Pi 2 and later (32-bit):
+
+```
+docker run -t --rm -u "${UID}" -v "${PWD}:${PWD}" -w "${PWD}" \
+  rocstreaming/toolchain-arm-linux-gnueabihf \
+    env TOOLCHAIN_PREFIX=arm-linux-gnueabihf PULSEAUDIO_VERSION=<...> make
+```
+
+Raspberry Pi 1 and Zero (32-bit):
+
+```
+docker run -t --rm -u "${UID}" -v "${PWD}:${PWD}" -w "${PWD}" \
+  rocstreaming/toolchain-arm-bcm2708hardfp-linux-gnueabi \
+    env TOOLCHAIN_PREFIX=arm-bcm2708hardfp-linux-gnueabi PULSEAUDIO_VERSION=<...> make
+```
 
 ## Running receiver
 

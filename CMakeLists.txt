@@ -7,23 +7,24 @@ endif()
 
 project(roc_pulse C CXX)
 
-set(HOST "" CACHE STRING "target host triplet, e.g. aarch64-linux-gnu")
+include("cmake/define_option.cmake")
 
+define_option(TOOLCHAIN_PREFIX "" STRING "target host triplet, e.g. aarch64-linux-gnu")
 include("cmake/setup_toolchain.cmake")
 
-option(DOWNLOAD_PULSEAUDIO "automatically download pulseaudio" ON)
-option(DOWNLOAD_LIBTOOL "automatically download libtool (ltdl)" ON)
-option(DOWNLOAD_ROC "automatically download and build roc-toolkit" ON)
+define_option(DOWNLOAD_PULSEAUDIO ON BOOL "automatically download pulseaudio")
+define_option(DOWNLOAD_LIBTOOL ON BOOL "automatically download libtool (ltdl)")
+define_option(DOWNLOAD_ROC ON BOOL "automatically download and build roc-toolkit")
 
-set(PULSEAUDIO_VERSION "" CACHE STRING "pulseaudio version")
-set(PULSEAUDIO_DIR "" CACHE STRING "directory with pulseaudio source code")
-set(PULSEAUDIO_MODULE_DIR "" CACHE STRING "directory where to install pulseaudio modules")
+define_option(PULSEAUDIO_VERSION "" STRING "pulseaudio version")
+define_option(PULSEAUDIO_DIR "" STRING "directory with pulseaudio source code")
+define_option(PULSEAUDIO_MODULE_DIR "" STRING "directory where to install pulseaudio modules")
 
-set(LIBTOOL_VERSION "2.4.6" CACHE STRING "libtool version")
-set(LIBTOOL_DIR "" CACHE STRING "directory with libtool source code")
+define_option(LIBTOOL_VERSION "2.4.6" STRING "libtool version")
+define_option(LIBTOOL_DIR "" STRING "directory with libtool source code")
 
-set(ROC_INCLUDE_DIR "" CACHE STRING "roc toolkit include directory")
-set(ROC_LIB_DIR "" CACHE STRING "roc toolkit library directory")
+define_option(ROC_INCLUDE_DIR "" STRING "roc toolkit include directory")
+define_option(ROC_LIB_DIR "" STRING "roc toolkit library directory")
 
 if(NOT PULSEAUDIO_VERSION)
   if(NOT PULSEAUDIO_DIR)

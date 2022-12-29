@@ -33,6 +33,7 @@ jobs:
 
       - name: Build roc-pulse
         run: |
+          set -ex
           mkdir build
           cd build
           cmake ..
@@ -40,6 +41,8 @@ jobs:
 
       - name: Install roc-pulse
         run: |
+          set -ex
+          cd build
           sudo make install
 
   native-build-system-roc:
@@ -71,6 +74,8 @@ jobs:
 
       - name: Install roc-pulse
         run: |
+          set -ex
+          cd build
           sudo make install
 
   native-build-external-roc:
@@ -105,6 +110,8 @@ jobs:
 
       - name: Install roc-pulse
         run: |
+          set -ex
+          cd build
           sudo make install
 
   native-build-external-pulse-and-system-libtool:
@@ -135,6 +142,8 @@ jobs:
 
       - name: Install roc-pulse
         run: |
+          set -ex
+          cd build
           sudo make install
 
   cross-build-download-all:
@@ -152,7 +161,7 @@ jobs:
             set -ex
             mkdir build
             cd build
-            cmake .. -DHOST=aarch64-linux-gnu -DPULSEAUDIO_VERSION=12.2
+            cmake .. -DTOOLCHAIN_PREFIX=aarch64-linux-gnu -DPULSEAUDIO_VERSION=12.2
             make VERBOSE=1
 
   cross-build-external-roc:
@@ -180,7 +189,7 @@ jobs:
             mkdir build
             cd build
             cmake .. \
-              -DHOST=aarch64-linux-gnu \
+              -DTOOLCHAIN_PREFIX=aarch64-linux-gnu \
               -DDOWNLOAD_ROC=OFF \
               -DROC_INCLUDE_DIR=./roc-install/include \
               -DROC_LIB_DIR=./roc-install/lib \
@@ -211,7 +220,7 @@ jobs:
             mkdir build
             cd build
             cmake .. \
-              -DHOST=aarch64-linux-gnu \
+              -DTOOLCHAIN_PREFIX=aarch64-linux-gnu \
               -DDOWNLOAD_PULSEAUDIO=OFF \
               -DPULSEAUDIO_DIR=./pulseaudio \
               -DPULSEAUDIO_VERSION=12.2 \
@@ -256,7 +265,8 @@ jobs:
           set -ex
           mkdir build
           cd build
-          cmake .. -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
+          cmake .. \
+            -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
           make VERBOSE=1
 
       - name: Cross build
@@ -269,7 +279,9 @@ jobs:
             set -ex
             mkdir build
             cd build
-            cmake .. -DHOST=aarch64-linux-gnu -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
+            cmake .. \
+              -DTOOLCHAIN_PREFIX=aarch64-linux-gnu \
+              -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
             make VERBOSE=1
 
   linux-versions:
@@ -344,5 +356,7 @@ jobs:
             set -ex
             mkdir build
             cd build
-            cmake .. -DHOST=${{ matrix.toolchain }} -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
+            cmake .. \
+              -DTOOLCHAIN_PREFIX=${{ matrix.toolchain }} \
+              -DPULSEAUDIO_VERSION=${{ matrix.pulse_ver }}
             make VERBOSE=1
