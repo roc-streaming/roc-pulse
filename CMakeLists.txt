@@ -145,6 +145,10 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
     "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-variable")
 endif()
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+link_libraries(Threads::Threads)
+
 add_definitions(
   -DROC_PULSEAUDIO_VERSION=${PULSEAUDIO_VERSION}
   )
