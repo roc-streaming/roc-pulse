@@ -142,7 +142,7 @@ endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -Weverything -Wno-unused-variable")
+    "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-variable")
 endif()
 
 add_definitions(
