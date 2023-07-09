@@ -16,12 +16,14 @@ set(SCONS_CMD
   --disable-sox
   --disable-libunwind
   --disable-pulseaudio
+  --host=${CMAKE_CXX_COMPILER_TARGET}
   "CC=${CMAKE_C_COMPILER}"
   "CCLD=${CMAKE_C_COMPILER}"
   "CXX=${CMAKE_CXX_COMPILER}"
   "CXXLD=${CMAKE_CXX_COMPILER}"
   "AR=${CMAKE_AR}"
   "RANLIB=${CMAKE_RANLIB}"
+  "STRIP=${CMAKE_STRIP}"
   )
 
 ExternalProject_Add(roc
