@@ -170,6 +170,7 @@ Roc sink input supports several options:
 | local\_ip               | no       | 0.0.0.0          | local address to bind to                                     |
 | local\_source\_port     | no       | 10001            | local port for source (audio) packets                        |
 | local\_repair\_port     | no       | 10002            | local port for repair (FEC) packets                          |
+| local\_control\_port    | no       | 10003            | local port for control (RTCP) packets                        |
 
 Here is how you can create a Roc sink input from command line:
 
@@ -203,13 +204,14 @@ For the sending side, use `module-roc-sink` PulseAudio module. It creates a Puls
 
 Roc sink supports several options:
 
-| option               | required | default     | description                                     |
-| -------------------- | -------- | ----------- | ----------------------------------------------- |
-| sink\_name           | no       | roc\_sender | the name of the new sink                        |
-| sink\_properties     | no       | empty       | additional sink properties                      |
-| remote\_ip           | yes      | no          | remote receiver address                         |
-| remote\_source\_port | no       | 10001       | remote receiver port for source (audio) packets |
-| remote\_repair\_port | no       | 10002       | remote receiver port for repair (FEC) packets   |
+| option                | required | default     | description                                     |
+| --------------------- | -------- | ----------- | ----------------------------------------------- |
+| sink\_name            | no       | roc\_sender | the name of the new sink                        |
+| sink\_properties      | no       | empty       | additional sink properties                      |
+| remote\_ip            | yes      | no          | remote receiver address                         |
+| remote\_source\_port  | no       | 10001       | remote receiver port for source (audio) packets |
+| remote\_repair\_port  | no       | 10002       | remote receiver port for repair (FEC) packets   |
+| remote\_control\_port | no       | 10003       | remote receiver port for control (RTCP) packets |
 
 Here is how you can create a Roc sink from command line:
 

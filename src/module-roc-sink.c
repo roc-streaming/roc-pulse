@@ -38,7 +38,8 @@ PA_MODULE_USAGE("sink_name=<name for the sink> "
                 "sink_properties=<properties for the sink> "
                 "remote_ip=<remote receiver ip> "
                 "remote_source_port=<remote receiver port for source packets> "
-                "remote_repair_port=<remote receiver port for repair packets>");
+                "remote_repair_port=<remote receiver port for repair packets>"
+                "remote_control_port=<remote receiver port for control packets>");
 
 struct roc_sink_userdata {
     pa_module* module;
@@ -52,6 +53,7 @@ struct roc_sink_userdata {
 
     roc_endpoint* remote_source_endp;
     roc_endpoint* remote_repair_endp;
+    roc_endpoint* remote_control_endp;
 
     roc_context* context;
     roc_sender* sender;
@@ -63,6 +65,7 @@ static const char* const roc_sink_modargs[] = { //
     "remote_ip",                                //
     "remote_source_port",                       //
     "remote_repair_port",                       //
+    "remote_control_port",                      //
     NULL
 };
 
@@ -244,6 +247,13 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    if (rocpulse_parse_endpoint(&u->remote_control_endp, ROCPULSE_DEFAULT_CONTROL_PROTO,
+                                args, "remote_ip", "", "remote_control_port",
+                                ROCPULSE_DEFAULT_CONTROL_PORT)
+        < 0) {
+        goto error;
+    }
+
     roc_context_config context_config;
     memset(&context_config, 0, sizeof(context_config));
 
@@ -273,6 +283,13 @@ int pa__init(pa_module* m) {
 
     if (roc_sender_connect(u->sender, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
                            u->remote_repair_endp)
+        != 0) {
+        pa_log("can't connect roc sender to remote address");
+        goto error;
+    }
+
+    if (roc_sender_connect(u->sender, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_CONTROL,
+                           u->remote_control_endp)
         != 0) {
         pa_log("can't connect roc sender to remote address");
         goto error;

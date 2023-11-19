@@ -38,7 +38,8 @@ PA_MODULE_USAGE("sink=<name for the sink> "
                 "io_latency_msec=<target playback latency in milliseconds> "
                 "local_ip=<local receiver ip> "
                 "local_source_port=<local receiver port for source packets> "
-                "local_repair_port=<local receiver port for repair packets>");
+                "local_repair_port=<local receiver port for repair packets>"
+                "local_control_port=<local receiver port for control packets>");
 
 struct roc_sink_input_userdata {
     pa_module* module;
@@ -46,6 +47,7 @@ struct roc_sink_input_userdata {
 
     roc_endpoint* local_source_endp;
     roc_endpoint* local_repair_endp;
+    roc_endpoint* local_control_endp;
 
     roc_context* context;
     roc_receiver* receiver;
@@ -61,6 +63,7 @@ static const char* const roc_sink_input_modargs[] = { //
     "local_ip",                                       //
     "local_source_port",                              //
     "local_repair_port",                              //
+    "local_control_port",                             //
     NULL
 };
 
@@ -200,6 +203,13 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    if (rocpulse_parse_endpoint(&u->local_control_endp, ROCPULSE_DEFAULT_CONTROL_PROTO,
+                                args, "local_ip", ROCPULSE_DEFAULT_IP,
+                                "local_control_port", ROCPULSE_DEFAULT_CONTROL_PORT)
+        < 0) {
+        goto error;
+    }
+
     roc_context_config context_config;
     memset(&context_config, 0, sizeof(context_config));
 
@@ -241,6 +251,13 @@ int pa__init(pa_module* m) {
 
     if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
                           u->local_repair_endp)
+        != 0) {
+        pa_log("can't connect roc receiver to local address");
+        goto error;
+    }
+
+    if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_CONTROL,
+                          u->local_control_endp)
         != 0) {
         pa_log("can't connect roc receiver to local address");
         goto error;
