@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.0.0)
+if((CMAKE_MAJOR_VERSION EQUAL 3) AND (CMAKE_MINOR_VERSION LESS 5))
+  cmake_minimum_required(VERSION 3.0)
+else()
+  cmake_minimum_required(VERSION 3.5)
+endif()
 
 if((CMAKE_MAJOR_VERSION GREATER 3) OR
     ((CMAKE_MAJOR_VERSION EQUAL 3) AND NOT (CMAKE_MINOR_VERSION LESS 24)))
