@@ -255,9 +255,9 @@ int pa__init(pa_module* m) {
     roc_sender_config sender_config;
     memset(&sender_config, 0, sizeof(sender_config));
 
-    sender_config.frame_sample_rate = 44100;
-    sender_config.frame_channels = ROC_CHANNEL_SET_STEREO;
-    sender_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+    sender_config.frame_encoding.rate = 44100;
+    sender_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
+    sender_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
     if (roc_sender_open(u->context, &sender_config, &u->sender) < 0) {
         pa_log("can't create roc sender");

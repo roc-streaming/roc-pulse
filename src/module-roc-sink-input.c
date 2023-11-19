@@ -211,9 +211,9 @@ int pa__init(pa_module* m) {
     roc_receiver_config receiver_config;
     memset(&receiver_config, 0, sizeof(receiver_config));
 
-    receiver_config.frame_sample_rate = 44100;
-    receiver_config.frame_channels = ROC_CHANNEL_SET_STEREO;
-    receiver_config.frame_encoding = ROC_FRAME_ENCODING_PCM_FLOAT;
+    receiver_config.frame_encoding.rate = 44100;
+    receiver_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
+    receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
     if (rocpulse_parse_resampler_profile(&receiver_config.resampler_profile, args,
                                          "resampler_profile")
