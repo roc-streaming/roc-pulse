@@ -33,7 +33,7 @@ PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink=<name for the sink> "
                 "sink_input_properties=<properties for the sink input> "
-                "resampler_profile=<empty>|disable|high|medium|low "
+                "resampler_profile=<empty>|high|medium|low "
                 "sess_latency_msec=<target network latency in milliseconds> "
                 "io_latency_msec=<target playback latency in milliseconds> "
                 "local_ip=<local receiver ip> "

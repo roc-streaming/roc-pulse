@@ -124,9 +124,6 @@ int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
     if (!str || !*str) {
         *out = ROC_RESAMPLER_PROFILE_DEFAULT;
         return 0;
-    } else if (strcmp(str, "disable") == 0) {
-        *out = ROC_RESAMPLER_PROFILE_DISABLE;
-        return 0;
     } else if (strcmp(str, "high") == 0) {
         *out = ROC_RESAMPLER_PROFILE_HIGH;
         return 0;

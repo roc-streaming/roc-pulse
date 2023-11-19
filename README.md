@@ -164,7 +164,7 @@ Roc sink input supports several options:
 | ----------------------- | -------- | ---------------- | ------------------------------------------------------------ |
 | sink                    | no       | \<default sink\> | the name of the sink to connect the new sink input to        |
 | sink\_input\_properties | no       | empty            | additional sink input properties                             |
-| resampler\_profile      | no       | medium           | resampler mode, supported values: disable, high, medium, low |
+| resampler\_profile      | no       | medium           | resampler mode, supported values: high, medium, low |
 | sess\_latency\_msec     | no       | 200              | target session latency in milliseconds                       |
 | io\_latency\_msec       | no       | 40               | target playback latency in milliseconds                      |
 | local\_ip               | no       | 0.0.0.0          | local address to bind to                                     |
