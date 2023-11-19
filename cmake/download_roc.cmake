@@ -14,6 +14,7 @@ set(SCONS_CMD
   --disable-shared
   --disable-tools
   --disable-sox
+  --disable-openssl
   --disable-libunwind
   --disable-pulseaudio
   --host=${CMAKE_CXX_COMPILER_TARGET}
