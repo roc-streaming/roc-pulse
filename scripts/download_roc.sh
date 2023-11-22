@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 dir="$1"
-branch="develop"
+branch="master"
 
 git clone --recurse-submodules -b "$branch" \
     https://github.com/roc-streaming/roc-toolkit.git "$dir"

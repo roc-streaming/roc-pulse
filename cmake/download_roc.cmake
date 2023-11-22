@@ -29,7 +29,7 @@ set(SCONS_CMD
 
 ExternalProject_Add(roc
   GIT_REPOSITORY "https://github.com/roc-streaming/roc-toolkit.git"
-  GIT_TAG "develop"
+  GIT_TAG "v0.3.0"
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/roc-src"
   INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix"
   BUILD_IN_SOURCE ON
