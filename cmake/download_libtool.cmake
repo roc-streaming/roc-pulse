@@ -19,8 +19,8 @@ ExternalProject_Add(libtool
   LOG_BUILD ${USE_LOGFILES}
   LOG_INSTALL ${USE_LOGFILES}
   LOG_TEST ${USE_LOGFILES}
-  )
+)
 
 include_directories(SYSTEM
   "${CMAKE_CURRENT_BINARY_DIR}/libtool-src/libltdl"
-  )
+)

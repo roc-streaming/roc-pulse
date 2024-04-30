@@ -20,10 +20,10 @@ ExternalProject_Add(pulseaudio
   LOG_BUILD ${USE_LOGFILES}
   LOG_INSTALL ${USE_LOGFILES}
   LOG_TEST ${USE_LOGFILES}
-  )
+)
 
 set(PULSEAUDIO_DIR "${CMAKE_CURRENT_BINARY_DIR}/pulseaudio-src")
 
 include_directories(SYSTEM
   "${PULSEAUDIO_DIR}/src"
-  )
+)

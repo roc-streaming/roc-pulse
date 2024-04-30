@@ -79,7 +79,7 @@ else()
 
   include_directories(SYSTEM
     "${PULSEAUDIO_DIR}/src"
-    )
+  )
 endif()
 
 if(DOWNLOAD_LIBTOOL)
@@ -97,7 +97,7 @@ elseif(NOT LIBTOOL_DIR STREQUAL "")
 
   include_directories(SYSTEM
     "${LIBTOOL_DIR}/libltdl"
-    )
+  )
 endif()
 
 if(DOWNLOAD_ROC)
@@ -166,52 +166,52 @@ link_libraries(Threads::Threads)
 
 add_definitions(
   -DROC_PULSEAUDIO_VERSION=${PULSEAUDIO_VERSION}
-  )
+)
 
 include_directories("src")
 
 add_library(rocpulse_helpers OBJECT
   "src/rocpulse_helpers.c"
-  )
+)
 
 if(SETUP_PULSEAUDIO)
   add_dependencies(rocpulse_helpers
     pulsebuild
-    )
+  )
 endif()
 
 if(DOWNLOAD_PULSEAUDIO)
   add_dependencies(rocpulse_helpers
     pulseaudio
-    )
+  )
 endif()
 
 if(DOWNLOAD_LIBTOOL)
   add_dependencies(rocpulse_helpers
     libtool
-    )
+  )
 endif()
 
 if(DOWNLOAD_ROC)
   add_dependencies(rocpulse_helpers
     roc
-    )
+  )
 endif()
 
 add_library(module-roc-sink SHARED
   $<TARGET_OBJECTS:rocpulse_helpers>
   "src/module-roc-sink.c"
-  )
+)
 
 add_library(module-roc-sink-input SHARED
   $<TARGET_OBJECTS:rocpulse_helpers>
   "src/module-roc-sink-input.c"
-  )
+)
 
 set(ALL_MODULES
   module-roc-sink
   module-roc-sink-input
-  )
+)
 
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
 
@@ -219,7 +219,7 @@ foreach(MODULE IN LISTS ALL_MODULES)
   install(
     FILES $<TARGET_FILE:${MODULE}>
     DESTINATION "${PULSEAUDIO_MODULE_DIR}"
-    )
+  )
 endforeach()
 
 add_custom_target(compile_commands ALL

@@ -25,7 +25,7 @@ set(SCONS_CMD
   "AR=${CMAKE_AR}"
   "RANLIB=${CMAKE_RANLIB}"
   "STRIP=${CMAKE_STRIP}"
-  )
+)
 
 ExternalProject_Add(roc
   GIT_REPOSITORY "https://github.com/roc-streaming/roc-toolkit.git"
@@ -45,13 +45,14 @@ ExternalProject_Add(roc
   LOG_BUILD ${USE_LOGFILES}
   LOG_INSTALL ${USE_LOGFILES}
   LOG_TEST ${USE_LOGFILES}
-  )
+)
 
 include_directories(SYSTEM
   "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix/include"
-  )
+)
 
 set(LIBROC "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix/lib/libroc.a")
 
 set(CMAKE_SHARED_LINKER_FLAGS
-  "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--whole-archive ${LIBROC} -Wl,--no-whole-archive -lstdc++")
+  "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--whole-archive ${LIBROC} -Wl,--no-whole-archive -lstdc++"
+)

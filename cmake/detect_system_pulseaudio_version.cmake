@@ -3,7 +3,7 @@ execute_process(
   ERROR_QUIET
   OUTPUT_VARIABLE SYSTEM_PULSEAUDIO_VERSION
   OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+)
 
 if(SYSTEM_PULSEAUDIO_VERSION STREQUAL "")
   message(STATUS "Detected SYSTEM_PULSEAUDIO_VERSION - None")
@@ -16,18 +16,18 @@ execute_process(
   ERROR_QUIET
   OUTPUT_VARIABLE SYSTEM_PULSEAUDIO_MODULE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+)
 
 if(SYSTEM_PULSEAUDIO_MODULE_DIR STREQUAL "")
   set(LIB_DIRS
     "lib"
-    )
+  )
 
   if(CMAKE_HOST_SYSTEM_VERSION MATCHES "amd64|x86_64")
     list(APPEND LIB_DIRS
       "lib64"
       "lib/x86_64-linux-gnu"
-      )
+    )
   endif()
 
   foreach(PREFIX IN ITEMS /usr/local /usr)

@@ -28,8 +28,8 @@ ExternalProject_Add(pulsebuild
   LOG_BUILD ${USE_LOGFILES}
   LOG_INSTALL ${USE_LOGFILES}
   LOG_TEST ${USE_LOGFILES}
-  )
+)
 
 include_directories(SYSTEM
   "${PULSEAUDIO_BUILD_DIR}/src"
-  )
+)
