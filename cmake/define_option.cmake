@@ -1,7 +1,7 @@
 macro(define_option ARG_NAME ARG_DEFAULT ARG_TYPE ARG_HELP)
   # overwrite default from environment
   set(DEFAULT_VALUE $ENV{${ARG_NAME}})
-  if(NOT DEFAULT_VALUE)
+  if("${DEFAULT_VALUE}" STREQUAL "")
     set(DEFAULT_VALUE "${ARG_DEFAULT}")
   endif()
 

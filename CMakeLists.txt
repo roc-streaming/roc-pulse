@@ -27,6 +27,7 @@ define_option(PULSEAUDIO_MODULE_DIR "" STRING "directory where to install pulsea
 define_option(LIBTOOL_VERSION "2.4.6" STRING "libtool version")
 define_option(LIBTOOL_DIR "" STRING "directory with libtool source code")
 
+define_option(ROC_REVISION "" STRING "roc toolkit revision to download")
 define_option(ROC_INCLUDE_DIR "" STRING "roc toolkit include directory")
 define_option(ROC_LIB_DIR "" STRING "roc toolkit library directory")
 
@@ -100,6 +101,11 @@ elseif(NOT LIBTOOL_DIR STREQUAL "")
 endif()
 
 if(DOWNLOAD_ROC)
+  if(NOT ROC_REVISION)
+    set(ROC_REVISION "v0.3.0")
+  endif()
+  message(STATUS "Using ROC_REVISION - ${ROC_REVISION}")
+
   include("cmake/download_roc.cmake")
 else()
   if(NOT ROC_INCLUDE_DIR STREQUAL "")
@@ -116,7 +122,11 @@ else()
     link_directories("${ROC_LIB_DIR}")
   endif()
 
-  link_libraries("roc")
+  link_libraries(
+    "roc"
+    "stdc++"
+    "pthread"
+  )
 endif()
 
 if((PULSEAUDIO_VERSION_MAJOR GREATER 14) OR
