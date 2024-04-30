@@ -1,19 +1,19 @@
 ifneq ($(TOOLCHAIN_PREFIX),)
-subdir := $(TOOLCHAIN_PREFIX)
+toolchain := $(TOOLCHAIN_PREFIX)
 else
-subdir := native
+toolchain := $(shell cc -v -E - </dev/null 2>&1 | grep Target | awk '{print $$2}')
 endif
 
 all: build
 
 .PHONY: build
 build:
-	mkdir -p build/$(subdir)
-	cd build/$(subdir) && cmake ../..
-	$(MAKE) --no-print-directory -C build/$(subdir)
+	mkdir -p build/$(toolchain)
+	cd build/$(toolchain) && cmake ../..
+	$(MAKE) --no-print-directory -C build/$(toolchain)
 
 install:
-	$(MAKE) --no-print-directory -C build/$(subdir) install
+	$(MAKE) --no-print-directory -C build/$(toolchain) install
 
 clean:
 	rm -rf build
