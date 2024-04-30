@@ -28,13 +28,13 @@ Advantages over Roc command-line tools:
 
 Advantages over PulseAudio "native" protocol:
 
-- Better service quaility when the latency is low and the network is unreliable. PulseAudio "native" protocol uses TCP, while Roc uses RTP, which is better suited for real-time communication than TCP-based protocols.
+- Better service quality when the latency is low and the network is unreliable. PulseAudio "native" protocol uses TCP, while Roc uses RTP, which is better suited for real-time communication than TCP-based protocols.
 
 - Compatibility with standard protocols. PulseAudio "native" protocol is PulseAudio-specific, while Roc implements a set of standardized RTP-based protocols.
 
 Advantages over PulseAudio built-in RTP support:
 
-- Better service quaility when the latency is low and the network is unreliable. PulseAudio uses bare RTP, while Roc also employs Forward Erasure Correction extensions.
+- Better service quality when the latency is low and the network is unreliable. PulseAudio uses bare RTP, while Roc also employs Forward Erasure Correction extensions.
 
 ## Build instructions
 
@@ -87,8 +87,8 @@ Optionally, download and unpack [libtool](https://gnu.askapache.com/libtool/). A
 Then you can build and install modules:
 
 ```
-mkdir build/native
-cd build/native
+mkdir build/x86_64-linux-gnu
+cd build/x86_64-linux-gnu
 cmake ../.. \
   -DDOWNLOAD_ROC=OFF \
   -DDOWNLOAD_PULSEAUDIO=OFF \
@@ -105,7 +105,7 @@ If you've installed Roc Toolkit to non-standard directory, you can use `-DROC_IN
 
 ### Cross-compilation
 
-For simple cases, you can do everything automaticaly by specifying just two environment variables:
+For simple cases, you can do everything automatically by specifying just two environment variables:
 
 ```
 TOOLCHAIN_PREFIX=<...> PULSEAUDIO_VERSION=<...> make
