@@ -245,6 +245,7 @@ jobs:
           - '14.2'
           - '15.0'
           - '16.1'
+          - '17.0'
         mode:
           - native
           - cross-compile
@@ -291,6 +292,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - distro: ubuntu-24.04
+            image: rocstreaming/env-ubuntu:24.04
+
           - distro: ubuntu-22.04
             image: rocstreaming/env-ubuntu:22.04
 
