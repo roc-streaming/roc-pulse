@@ -1,14 +1,16 @@
 /*
  * This file is part of Roc PulseAudio integration.
  *
- * Copyright (c) 2017 Roc Streaming authors
+ * Copyright (c) Roc Streaming authors
  *
  * Licensed under GNU Lesser General Public License 2.1 or any later version.
  */
 
 /* system headers */
 #include <arpa/inet.h>
+#include <float.h>
 #include <limits.h>
+#include <math.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -20,9 +22,6 @@ void rocpulse_log_handler(const roc_log_message* message, void* argument) {
     (void)argument;
 
     switch (message->level) {
-    case ROC_LOG_NONE:
-        return;
-
     case ROC_LOG_ERROR:
         pa_log_level_meta(PA_LOG_ERROR, message->module, -1, NULL, "%s", message->text);
         return;
@@ -31,15 +30,15 @@ void rocpulse_log_handler(const roc_log_message* message, void* argument) {
         pa_log_level_meta(PA_LOG_INFO, message->module, -1, NULL, "%s", message->text);
         return;
 
-    case ROC_LOG_DEBUG:
-    case ROC_LOG_TRACE:
+    default:
         pa_log_level_meta(PA_LOG_DEBUG, message->module, -1, NULL, "%s", message->text);
         return;
     }
 }
 
 int rocpulse_parse_endpoint(roc_endpoint** endp,
-                            roc_protocol proto,
+                            roc_interface iface,
+                            roc_fec_encoding fec_encoding,
                             pa_modargs* args,
                             const char* ip_arg,
                             const char* default_ip_arg,
@@ -47,6 +46,54 @@ int rocpulse_parse_endpoint(roc_endpoint** endp,
                             const char* default_port_arg) {
     if (roc_endpoint_allocate(endp) != 0) {
         pa_log("can't allocate endpoint");
+        return -1;
+    }
+
+    roc_protocol proto = 0;
+
+    switch (iface) {
+    case ROC_INTERFACE_AUDIO_SOURCE:
+        switch (fec_encoding) {
+        case ROC_FEC_ENCODING_DISABLE:
+            proto = ROC_PROTO_RTP;
+            break;
+        case ROC_FEC_ENCODING_DEFAULT:
+        case ROC_FEC_ENCODING_RS8M:
+            proto = ROC_PROTO_RTP_RS8M_SOURCE;
+            break;
+        case ROC_FEC_ENCODING_LDPC_STAIRCASE:
+            proto = ROC_PROTO_RTP_LDPC_SOURCE;
+            break;
+        default:
+            pa_log("can't select endpoint protocol");
+            return -1;
+        }
+        break;
+
+    case ROC_INTERFACE_AUDIO_REPAIR:
+        switch (fec_encoding) {
+        case ROC_FEC_ENCODING_DISABLE:
+            pa_log("can't select endpoint protocol");
+            return -1;
+        case ROC_FEC_ENCODING_DEFAULT:
+        case ROC_FEC_ENCODING_RS8M:
+            proto = ROC_PROTO_RS8M_REPAIR;
+            break;
+        case ROC_FEC_ENCODING_LDPC_STAIRCASE:
+            proto = ROC_PROTO_LDPC_REPAIR;
+            break;
+        default:
+            pa_log("can't select endpoint protocol");
+            return -1;
+        }
+        break;
+
+    case ROC_INTERFACE_AUDIO_CONTROL:
+        proto = ROC_PROTO_RTCP;
+        break;
+
+    default:
+        pa_log("can't select endpoint protocol");
         return -1;
     }
 
@@ -93,11 +140,10 @@ int rocpulse_parse_endpoint(roc_endpoint** endp,
     return 0;
 }
 
-int rocpulse_parse_duration_msec(unsigned long long* out,
-                                 unsigned long out_base,
-                                 pa_modargs* args,
-                                 const char* arg_name,
-                                 const char* arg_default) {
+int rocpulse_parse_uint(unsigned int* out,
+                        pa_modargs* args,
+                        const char* arg_name,
+                        const char* arg_default) {
     const char* str = pa_modargs_get_value(args, arg_name, arg_default);
 
     char* end = NULL;
@@ -107,13 +153,162 @@ int rocpulse_parse_duration_msec(unsigned long long* out,
         return -1;
     }
 
+    if (num < 0 || (num > 0 && (unsigned long)num > (unsigned long)UINT_MAX)) {
+        pa_log("invalid %s: out of range: %s", arg_name, str);
+        return -1;
+    }
+
+    *out = (unsigned int)num;
+    return 0;
+}
+
+int rocpulse_parse_duration_msec_ul(unsigned long long* out,
+                                    unsigned long out_base,
+                                    pa_modargs* args,
+                                    const char* arg_name,
+                                    const char* arg_default) {
+    const char* str = pa_modargs_get_value(args, arg_name, arg_default);
+
+    char* end = NULL;
+    double num = strtod(str, &end);
+    if (num == DBL_MIN || num == HUGE_VAL || !end || *end) {
+        pa_log("invalid %s: not a number: %s", arg_name, str);
+        return -1;
+    }
+
     if (num < 0) {
         pa_log("invalid %s: should not be negative: %s", arg_name, str);
         return -1;
     }
 
-    *out = (unsigned long long)num * (1000000 / out_base);
+    *out = (unsigned long long)(num / out_base * 1000000);
     return 0;
+}
+
+int rocpulse_parse_duration_msec_ll(long long* out,
+                                    unsigned long out_base,
+                                    pa_modargs* args,
+                                    const char* arg_name,
+                                    const char* arg_default) {
+    const char* str = pa_modargs_get_value(args, arg_name, arg_default);
+
+    char* end = NULL;
+    double num = strtod(str, &end);
+    if (num == DBL_MIN || num == HUGE_VAL || !end || *end) {
+        pa_log("invalid %s: not a number: %s", arg_name, str);
+        return -1;
+    }
+
+    *out = (unsigned long long)(num / out_base * 1000000);
+    return 0;
+}
+
+int rocpulse_parse_packet_encoding(roc_packet_encoding* out,
+                                   pa_modargs* args,
+                                   const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str) {
+        *out = 0;
+        return 0;
+    } else if (strcmp(str, "avp/l16/mono") == 0) {
+        *out = ROC_PACKET_ENCODING_AVP_L16_MONO;
+        return 0;
+    } else if (strcmp(str, "avp/l16/stereo") == 0) {
+        *out = ROC_PACKET_ENCODING_AVP_L16_STEREO;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+
+int rocpulse_parse_fec_encoding(roc_fec_encoding* out,
+                                pa_modargs* args,
+                                const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_FEC_ENCODING_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "disable") == 0) {
+        *out = ROC_FEC_ENCODING_DISABLE;
+        return 0;
+    } else if (strcmp(str, "rs8m") == 0) {
+        *out = ROC_FEC_ENCODING_RS8M;
+        return 0;
+    } else if (strcmp(str, "ldpc") == 0) {
+        *out = ROC_FEC_ENCODING_LDPC_STAIRCASE;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+
+#if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+int rocpulse_parse_latency_tuner_backend(roc_latency_tuner_backend* out,
+                                         pa_modargs* args,
+                                         const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_LATENCY_TUNER_BACKEND_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "niq") == 0) {
+        *out = ROC_LATENCY_TUNER_BACKEND_NIQ;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+
+int rocpulse_parse_latency_tuner_profile(roc_latency_tuner_profile* out,
+                                         pa_modargs* args,
+                                         const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "intact") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_INTACT;
+        return 0;
+    } else if (strcmp(str, "responsive") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_RESPONSIVE;
+        return 0;
+    } else if (strcmp(str, "gradual") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_GRADUAL;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+
+int rocpulse_parse_resampler_backend(roc_resampler_backend* out,
+                                     pa_modargs* args,
+                                     const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_RESAMPLER_BACKEND_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "builtin") == 0) {
+        *out = ROC_RESAMPLER_BACKEND_BUILTIN;
+        return 0;
+    } else if (strcmp(str, "speex") == 0) {
+        *out = ROC_RESAMPLER_BACKEND_SPEEX;
+        return 0;
+    } else if (strcmp(str, "speexdec") == 0) {
+        *out = ROC_RESAMPLER_BACKEND_SPEEXDEC;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
 }
 
 int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
@@ -121,7 +316,7 @@ int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
                                      const char* arg_name) {
     const char* str = pa_modargs_get_value(args, arg_name, "");
 
-    if (!str || !*str) {
+    if (!str || !*str || strcmp(str, "default") == 0) {
         *out = ROC_RESAMPLER_PROFILE_DEFAULT;
         return 0;
     } else if (strcmp(str, "high") == 0) {

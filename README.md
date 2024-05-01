@@ -36,6 +36,15 @@ Advantages over PulseAudio built-in RTP support:
 
 - Better service quality when the latency is low and the network is unreliable. PulseAudio uses bare RTP, while Roc also employs Forward Erasure Correction extensions.
 
+## Interoperability
+
+These modules can communicate with all other Roc Toolkit senders and receivers:
+
+* [cross-platform command-line tools](https://roc-streaming.org/toolkit/docs/tools/command_line_tools.html)
+* [modules for sound servers](https://roc-streaming.org/toolkit/docs/tools/sound_server_modules.html) (PulseAudio, PipeWire, macOS CoreAudio)
+* [C library](https://roc-streaming.org/toolkit/docs/api.html) and [bindings for other languages](https://roc-streaming.org/toolkit/docs/api/bindings.html)
+* [applications](https://roc-streaming.org/toolkit/docs/tools/applications.html) (Android)
+
 ## Build instructions
 
 ### Simple build
@@ -114,8 +123,8 @@ TOOLCHAIN_PREFIX=<...> PULSEAUDIO_VERSION=<...> make
 For more granular configuration, you can invoke CMake directly:
 
 ```
-mkdir build/cross
-cd build/cross
+mkdir build/<...>
+cd build/<...>
 cmake ../.. -DTOOLCHAIN_PREFIX=<...> -DPULSEAUDIO_VERSION=<...>
 make VERBOSE=1
 ```
@@ -160,17 +169,25 @@ For the receiving side, use `module-roc-sink-input` PulseAudio module. It create
 
 Roc sink input supports several options:
 
-| option                  | required | default          | description                                                  |
-| ----------------------- | -------- | ---------------- | ------------------------------------------------------------ |
-| sink                    | no       | \<default sink\> | the name of the sink to connect the new sink input to        |
-| sink\_input\_properties | no       | empty            | additional sink input properties                             |
-| resampler\_profile      | no       | medium           | resampler mode, supported values: high, medium, low |
-| sess\_latency\_msec     | no       | 200              | target session latency in milliseconds                       |
-| io\_latency\_msec       | no       | 40               | target playback latency in milliseconds                      |
-| local\_ip               | no       | 0.0.0.0          | local address to bind to                                     |
-| local\_source\_port     | no       | 10001            | local port for source (audio) packets                        |
-| local\_repair\_port     | no       | 10002            | local port for repair (FEC) packets                          |
-| local\_control\_port    | no       | 10003            | local port for control (RTCP) packets                        |
+| option                  | required | default              | description                                                  |
+|-------------------------|----------|----------------------|--------------------------------------------------------------|
+| sink                    | no       | \<default sink\>     | the name of the sink to connect the new sink input to        |
+| sink\_input\_properties | no       | empty                | additional sink input properties                             |
+| local\_ip               | no       | 0.0.0.0              | local address to bind to                                     |
+| local\_source\_port     | no       | 10001                | local port for source (RTP) packets                          |
+| local\_repair\_port     | no       | 10002                | local port for repair (FEC) packets                          |
+| local\_control\_port    | no       | 10003                | local port for control (RTCP) packets                        |
+| fec\_encoding           | no       | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |
+| target\_latency\_msec   | no       | 200                  | target latency in milliseconds                               |
+| min\_latency\_msec      | no       | 50                   | minimum latency in milliseconds                              |
+| max\_latency\_msec      | no       | 1000                 | maximum latency in milliseconds                              |
+| io\_latency\_msec       | no       | 40                   | playback latency in milliseconds                             |
+| latency\_backend        | no       | select automatically | latency tuner backend (default, niq)                         |
+| latency\_profile        | no       | select automatically | latency tuner profile (default, intact, responsive, gradual) |
+| resampler\_backend      | no       | select automatically | resampler backend (default, builtin, speex, speexdec)        |
+| resampler\_profile      | no       | medium               | resampler profile (default, high, medium, low)               |
+
+For more information about these options, consult [C API documentation](https://roc-streaming.org/toolkit/docs/api/reference.html).
 
 Here is how you can create a Roc sink input from command line:
 
@@ -204,14 +221,28 @@ For the sending side, use `module-roc-sink` PulseAudio module. It creates a Puls
 
 Roc sink supports several options:
 
-| option                | required | default     | description                                     |
-| --------------------- | -------- | ----------- | ----------------------------------------------- |
-| sink\_name            | no       | roc\_sender | the name of the new sink                        |
-| sink\_properties      | no       | empty       | additional sink properties                      |
-| remote\_ip            | yes      | no          | remote receiver address                         |
-| remote\_source\_port  | no       | 10001       | remote receiver port for source (audio) packets |
-| remote\_repair\_port  | no       | 10002       | remote receiver port for repair (FEC) packets   |
-| remote\_control\_port | no       | 10003       | remote receiver port for control (RTCP) packets |
+| option                | required | default              | description                                                  | note                           |
+|-----------------------|----------|----------------------|--------------------------------------------------------------|--------------------------------|
+| sink\_name            | no       | roc\_sender          | the name of the new sink                                     |                                |
+| sink\_properties      | no       | empty                | additional sink properties                                   |                                |
+| remote\_ip            | **yes**  | no                   | remote receiver address                                      |                                |
+| remote\_source\_port  | no       | 10001                | remote receiver port for source (audio) packets              |                                |
+| remote\_repair\_port  | no       | 10002                | remote receiver port for repair (FEC) packets                |                                |
+| remote\_control\_port | no       | 10003                | remote receiver port for control (RTCP) packets              |                                |
+| fec\_encoding         | no       | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |                                |
+| fec\_nbsrc            | no       | 18                   | number of source packets in FEC block                        |                                |
+| fec\_nbrpr            | no       | 10                   | number of repair packets in FEC block                        |                                |
+| packet\_encoding      | no       | avp/l16/stereo       | encoding for audio packets (avp/l16/mono, avp/l16/stereo)    |                                |
+| packet\_len\_msec     | no       | 5                    | network packet length in milliseconds                        |                                |
+| target\_latency\_msec | no       | disabled             | target latency in milliseconds                               | for sender-side latency tuning |
+| min\_latency\_msec    | no       | disabled             | minimum latency in milliseconds                              | for sender-side latency tuning |
+| max\_latency\_msec    | no       | disabled             | maximum latency in milliseconds                              | for sender-side latency tuning |
+| latency\_backend      | no       | disabled             | latency tuner backend (default, niq)                         | for sender-side latency tuning |
+| latency\_profile      | no       | disabled             | latency tuner profile (default, intact, responsive, gradual) | for sender-side latency tuning |
+| resampler\_backend    | no       | select automatically | resampler backend (default, builtin, speex, speexdec)        |                                |
+| resampler\_profile    | no       | medium               | resampler profile (default, high, medium, low)               |                                |
+
+For more information about these options, consult [C API documentation](https://roc-streaming.org/toolkit/docs/api/reference.html).
 
 Here is how you can create a Roc sink from command line:
 
@@ -253,13 +284,6 @@ Sink input name and description can be configured via `sink_input_name` module a
 pactl load-module module-roc-sink-input \
   sink_input_name=my_name sink_input_properties=media.name=My-Description
 ```
-
-## Interoperability
-
-These PulseAudio modules are interoperable with Roc library command line tools, i.e.:
-
-- as a sender, you can use either `roc_sender` from the C library, `roc-send` command line tool, or `module-roc-sink`
-- as a receiver, you can use either `roc_receiver` from the C library, `roc-recv` command line tool, or `module-roc-sink-input`
 
 ## Troubleshooting
 

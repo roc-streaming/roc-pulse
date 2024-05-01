@@ -1,7 +1,7 @@
 /*
  * This file is part of Roc PulseAudio integration.
  *
- * Copyright (c) 2017 Roc Streaming authors
+ * Copyright (c) Roc Streaming authors
  *
  * Licensed under GNU Lesser General Public License 2.1 or any later version.
  */
@@ -23,23 +23,30 @@
 #include <roc/context.h>
 #include <roc/log.h>
 #include <roc/receiver.h>
+#include <roc/version.h>
 
 /* local headers */
 #include "rocpulse_helpers.h"
 
 PA_MODULE_AUTHOR("Roc Streaming authors");
-PA_MODULE_DESCRIPTION("Read samples using Roc receiver");
+PA_MODULE_DESCRIPTION("Read audio stream from Roc receiver");
 PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink=<name for the sink> "
                 "sink_input_properties=<properties for the sink input> "
-                "resampler_profile=<empty>|high|medium|low "
-                "sess_latency_msec=<target network latency in milliseconds> "
-                "io_latency_msec=<target playback latency in milliseconds> "
+                "fec_encoding=disable|rs8m|ldpc "
+                "target_latency_msec=<target latency in milliseconds> "
+                "min_latency_msec=<minimum latency in milliseconds> "
+                "max_latency_msec=<maximum latency in milliseconds> "
+                "io_latency_msec=<playback latency in milliseconds> "
+                "latency_backend=default|niq "
+                "latency_profile=default|intact|responsive|gradual "
+                "resampler_backend=default|builtin|speex|speexdec "
+                "resampler_profile=default|high|medium|low "
                 "local_ip=<local receiver ip> "
-                "local_source_port=<local receiver port for source packets> "
-                "local_repair_port=<local receiver port for repair packets>"
-                "local_control_port=<local receiver port for control packets>");
+                "local_source_port=<local receiver port for source (RTP) packets> "
+                "local_repair_port=<local receiver port for repair (FEC) packets> "
+                "local_control_port=<local receiver port for control (RTCP) packets>");
 
 struct roc_sink_input_userdata {
     pa_module* module;
@@ -57,9 +64,15 @@ static const char* const roc_sink_input_modargs[] = { //
     "sink",                                           //
     "sink_input_name",                                //
     "sink_input_properties",                          //
-    "resampler_profile",                              //
-    "sess_latency_msec",                              //
+    "fec_encoding",                                   //
+    "target_latency_msec",                            //
+    "min_latency_msec",                               //
+    "max_latency_msec",                               //
     "io_latency_msec",                                //
+    "latency_backend",                                //
+    "latency_profile",                                //
+    "resampler_backend",                              //
+    "resampler_profile",                              //
     "local_ip",                                       //
     "local_source_port",                              //
     "local_repair_port",                              //
@@ -189,27 +202,7 @@ int pa__init(pa_module* m) {
 
     u->module = m;
 
-    if (rocpulse_parse_endpoint(&u->local_source_endp, ROCPULSE_DEFAULT_SOURCE_PROTO,
-                                args, "local_ip", ROCPULSE_DEFAULT_IP,
-                                "local_source_port", ROCPULSE_DEFAULT_SOURCE_PORT)
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_endpoint(&u->local_repair_endp, ROCPULSE_DEFAULT_REPAIR_PROTO,
-                                args, "local_ip", ROCPULSE_DEFAULT_IP,
-                                "local_repair_port", ROCPULSE_DEFAULT_REPAIR_PORT)
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_endpoint(&u->local_control_endp, ROCPULSE_DEFAULT_CONTROL_PROTO,
-                                args, "local_ip", ROCPULSE_DEFAULT_IP,
-                                "local_control_port", ROCPULSE_DEFAULT_CONTROL_PORT)
-        < 0) {
-        goto error;
-    }
-
+    /* roc context */
     roc_context_config context_config;
     memset(&context_config, 0, sizeof(context_config));
 
@@ -218,6 +211,14 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    /* roc receiver fec encoding */
+    roc_fec_encoding receiver_fec_encoding = ROC_FEC_ENCODING_DEFAULT;
+
+    if (rocpulse_parse_fec_encoding(&receiver_fec_encoding, args, "fec_encoding") < 0) {
+        goto error;
+    }
+
+    /* roc receiver config */
     roc_receiver_config receiver_config;
     memset(&receiver_config, 0, sizeof(receiver_config));
 
@@ -225,18 +226,78 @@ int pa__init(pa_module* m) {
     receiver_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
     receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
+    if (rocpulse_parse_duration_msec_ul(&receiver_config.target_latency, 1, args,
+                                        "target_latency_msec", "200")
+        < 0) {
+        goto error;
+    }
+
+#if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.min_latency, 1, args,
+                                        "min_latency_msec", "50")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.max_latency, 1, args,
+                                        "max_latency_msec", "1000")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_latency_tuner_backend(&receiver_config.latency_tuner_backend, args,
+                                             "latency_backend")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_latency_tuner_profile(&receiver_config.latency_tuner_profile, args,
+                                             "latency_profile")
+        < 0) {
+        goto error;
+    }
+#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+
+    if (rocpulse_parse_resampler_backend(&receiver_config.resampler_backend, args,
+                                         "resampler_backend")
+        < 0) {
+        goto error;
+    }
+
     if (rocpulse_parse_resampler_profile(&receiver_config.resampler_profile, args,
                                          "resampler_profile")
         < 0) {
         goto error;
     }
 
-    if (rocpulse_parse_duration_msec(&receiver_config.target_latency, 1, args,
-                                     "sess_latency_msec", "200")
+    /* roc receiver endpoints */
+    if (rocpulse_parse_endpoint(&u->local_source_endp, ROC_INTERFACE_AUDIO_SOURCE,
+                                receiver_fec_encoding, args, "local_ip",
+                                ROCPULSE_DEFAULT_IP, "local_source_port",
+                                ROCPULSE_DEFAULT_SOURCE_PORT)
         < 0) {
         goto error;
     }
 
+    if (receiver_fec_encoding != ROC_FEC_ENCODING_DISABLE) {
+        if (rocpulse_parse_endpoint(&u->local_repair_endp, ROC_INTERFACE_AUDIO_REPAIR,
+                                    receiver_fec_encoding, args, "local_ip",
+                                    ROCPULSE_DEFAULT_IP, "local_repair_port",
+                                    ROCPULSE_DEFAULT_REPAIR_PORT)
+            < 0) {
+            goto error;
+        }
+    }
+
+    if (rocpulse_parse_endpoint(&u->local_control_endp, ROC_INTERFACE_AUDIO_CONTROL,
+                                receiver_fec_encoding, args, "local_ip",
+                                ROCPULSE_DEFAULT_IP, "local_control_port",
+                                ROCPULSE_DEFAULT_CONTROL_PORT)
+        < 0) {
+        goto error;
+    }
+
+    /* open and bind */
     if (roc_receiver_open(u->context, &receiver_config, &u->receiver) < 0) {
         pa_log("can't create roc receiver");
         goto error;
@@ -245,21 +306,23 @@ int pa__init(pa_module* m) {
     if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_SOURCE,
                           u->local_source_endp)
         != 0) {
-        pa_log("can't connect roc receiver to local address");
+        pa_log("can't bind roc receiver to local address");
         goto error;
     }
 
-    if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
-                          u->local_repair_endp)
-        != 0) {
-        pa_log("can't connect roc receiver to local address");
-        goto error;
+    if (u->local_repair_endp) {
+        if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_REPAIR,
+                              u->local_repair_endp)
+            != 0) {
+            pa_log("can't bind roc receiver to local address");
+            goto error;
+        }
     }
 
     if (roc_receiver_bind(u->receiver, ROC_SLOT_DEFAULT, ROC_INTERFACE_AUDIO_CONTROL,
                           u->local_control_endp)
         != 0) {
-        pa_log("can't connect roc receiver to local address");
+        pa_log("can't bind roc receiver to local address");
         goto error;
     }
 
@@ -302,8 +365,8 @@ int pa__init(pa_module* m) {
     pa_sink_input_put(u->sink_input);
 
     unsigned long long playback_latency_us = 0;
-    if (rocpulse_parse_duration_msec(&playback_latency_us, 1000, args, "io_latency_msec",
-                                     "40")
+    if (rocpulse_parse_duration_msec_ul(&playback_latency_us, 1000, args,
+                                        "io_latency_msec", "40")
         < 0) {
         goto error;
     }
@@ -355,6 +418,12 @@ void pa__done(pa_module* m) {
 
     if (u->local_repair_endp) {
         if (roc_endpoint_deallocate(u->local_repair_endp) != 0) {
+            pa_log("failed to deallocate roc endpoint");
+        }
+    }
+
+    if (u->local_control_endp) {
+        if (roc_endpoint_deallocate(u->local_control_endp) != 0) {
             pa_log("failed to deallocate roc endpoint");
         }
     }
