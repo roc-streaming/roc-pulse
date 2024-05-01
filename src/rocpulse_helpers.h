@@ -55,8 +55,15 @@ int rocpulse_parse_duration_msec_ll(long long* out,
                                     const char* arg_default);
 
 int rocpulse_parse_packet_encoding(roc_packet_encoding* out,
+                                   int* need_registration,
                                    pa_modargs* args,
                                    const char* arg_name);
+
+int rocpulse_parse_media_encoding(roc_media_encoding* out,
+                                  pa_modargs* args,
+                                  const char* rate_arg_name,
+                                  const char* format_arg_name,
+                                  const char* chans_arg_name);
 
 int rocpulse_parse_fec_encoding(roc_fec_encoding* out,
                                 pa_modargs* args,

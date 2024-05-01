@@ -36,8 +36,11 @@ PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink_name=<name for the sink> "
                 "sink_properties=<properties for the sink> "
-                "packet_encoding=avp/l16/mono|avp/l16/stereo "
-                "packet_len_msec=<packet length in milliseconds> "
+                "audio_encoding=<8-bit number> "
+                "audio_rate=<sample rate> "
+                "audio_format=s16 "
+                "audio_chans=mono|stereo "
+                "audio_packet_msec=<audio packet length in milliseconds> "
                 "fec_encoding=disable|rs8m|ldpc "
                 "fec_nbsrc=<number of source packets in FEC block> "
                 "fec_nbrpr=<number of repair packets in FEC block> "
@@ -74,8 +77,11 @@ struct roc_sink_userdata {
 static const char* const roc_sink_modargs[] = { //
     "sink_name",                                //
     "sink_properties",                          //
-    "packet_encoding",                          //
-    "packet_len_msec",                          //
+    "audio_encoding",                           //
+    "audio_rate",                               //
+    "audio_format",                             //
+    "audio_chans",                              //
+    "audio_packet_msec",                        //
     "fec_encoding",                             //
     "fec_nbsrc",                                //
     "fec_nbrpr",                                //
@@ -274,14 +280,33 @@ int pa__init(pa_module* m) {
     sender_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
     sender_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
-    if (rocpulse_parse_packet_encoding(&sender_config.packet_encoding, args,
-                                       "packet_encoding")
+    int need_registration = 0;
+
+    if (rocpulse_parse_packet_encoding(&sender_config.packet_encoding, &need_registration,
+                                       args, "audio_encoding")
         < 0) {
         goto error;
     }
 
+    if (need_registration) {
+        roc_media_encoding encoding;
+
+        if (rocpulse_parse_media_encoding(&encoding, args, "audio_rate", "audio_format",
+                                          "audio_chans")
+            < 0) {
+            goto error;
+        }
+
+        if (roc_context_register_encoding(u->context, sender_config.packet_encoding,
+                                          &encoding)
+            < 0) {
+            pa_log("can't register packet encoding");
+            goto error;
+        }
+    }
+
     if (rocpulse_parse_duration_msec_ul(&sender_config.packet_length, 1, args,
-                                        "packet_len_msec", "0")
+                                        "audio_packet_msec", "0")
         < 0) {
         goto error;
     }

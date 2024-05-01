@@ -204,23 +204,68 @@ int rocpulse_parse_duration_msec_ll(long long* out,
 }
 
 int rocpulse_parse_packet_encoding(roc_packet_encoding* out,
+                                   int* need_registration,
                                    pa_modargs* args,
                                    const char* arg_name) {
     const char* str = pa_modargs_get_value(args, arg_name, "");
 
     if (!str || !*str) {
         *out = 0;
-        return 0;
-    } else if (strcmp(str, "avp/l16/mono") == 0) {
-        *out = ROC_PACKET_ENCODING_AVP_L16_MONO;
-        return 0;
-    } else if (strcmp(str, "avp/l16/stereo") == 0) {
-        *out = ROC_PACKET_ENCODING_AVP_L16_STEREO;
+        *need_registration = 0;
         return 0;
     } else {
-        pa_log("invalid %s: %s", arg_name, str);
+        char* end = NULL;
+        long num = strtol(str, &end, 10);
+        if (num == LONG_MIN || num == LONG_MAX || !end || *end) {
+            pa_log("invalid %s: not a number: %s", arg_name, str);
+            return -1;
+        }
+
+        if (num < 0 || (num > 0 && (long)num > (long)INT_MAX)) {
+            pa_log("invalid %s: out of range: %s", arg_name, str);
+            return -1;
+        }
+
+        *out = (int)num;
+        *need_registration = 1;
+        return 0;
+    }
+}
+
+int rocpulse_parse_media_encoding(roc_media_encoding* out,
+                                  pa_modargs* args,
+                                  const char* rate_arg_name,
+                                  const char* format_arg_name,
+                                  const char* chans_arg_name) {
+    memset(out, 0, sizeof(*out));
+
+    /* rate */
+    if (rocpulse_parse_uint(&out->rate, args, rate_arg_name, "44100") < 0) {
         return -1;
     }
+
+    /* channels */
+    const char* chans = pa_modargs_get_value(args, chans_arg_name, "stereo");
+    if (!chans || !*chans || strcmp(chans, "stereo") == 0) {
+        out->channels = ROC_CHANNEL_LAYOUT_STEREO;
+    } else if (strcmp(chans, "mono")) {
+        out->channels = ROC_CHANNEL_LAYOUT_MONO;
+    } else {
+        pa_log("invalid %s: %s", chans_arg_name, chans);
+        return -1;
+    }
+
+    /* format */
+    const char* format = pa_modargs_get_value(args, format_arg_name, "s16");
+    if (!format || !*format || strcmp(format, "s16") == 0) {
+        // TODO: use proper format when roc API is fixed
+        out->format = ROC_FORMAT_PCM_FLOAT32;
+    } else {
+        pa_log("invalid %s: %s", format_arg_name, format);
+        return -1;
+    }
+
+    return 0;
 }
 
 int rocpulse_parse_fec_encoding(roc_fec_encoding* out,

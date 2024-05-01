@@ -34,6 +34,10 @@ PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink=<name for the sink> "
                 "sink_input_properties=<properties for the sink input> "
+                "audio_encoding=<8-bit number> "
+                "audio_rate=<sample rate> "
+                "audio_format=s16 "
+                "audio_chans=mono|stereo "
                 "fec_encoding=disable|rs8m|ldpc "
                 "target_latency_msec=<target latency in milliseconds> "
                 "min_latency_msec=<minimum latency in milliseconds> "
@@ -64,6 +68,10 @@ static const char* const roc_sink_input_modargs[] = { //
     "sink",                                           //
     "sink_input_name",                                //
     "sink_input_properties",                          //
+    "audio_encoding",                                 //
+    "audio_rate",                                     //
+    "audio_format",                                   //
+    "audio_chans",                                    //
     "fec_encoding",                                   //
     "target_latency_msec",                            //
     "min_latency_msec",                               //
@@ -211,7 +219,33 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    /* roc receiver fec encoding */
+    /* audio encoding */
+    roc_packet_encoding receiver_packet_encoding = 0;
+    int need_registration = 0;
+
+    if (rocpulse_parse_packet_encoding(&receiver_packet_encoding, &need_registration,
+                                       args, "audio_encoding")
+        < 0) {
+        goto error;
+    }
+
+    if (need_registration) {
+        roc_media_encoding encoding;
+
+        if (rocpulse_parse_media_encoding(&encoding, args, "audio_rate", "audio_format",
+                                          "audio_chans")
+            < 0) {
+            goto error;
+        }
+
+        if (roc_context_register_encoding(u->context, receiver_packet_encoding, &encoding)
+            < 0) {
+            pa_log("can't register packet encoding");
+            goto error;
+        }
+    }
+
+    /* fec encoding */
     roc_fec_encoding receiver_fec_encoding = ROC_FEC_ENCODING_DEFAULT;
 
     if (rocpulse_parse_fec_encoding(&receiver_fec_encoding, args, "fec_encoding") < 0) {
