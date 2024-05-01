@@ -1,6 +1,7 @@
 /bin
 /build
-.cache
 compile_commands.json
+.cache
+.ignore
 .justfile
 TODO.org

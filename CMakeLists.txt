@@ -9,6 +9,12 @@ if((CMAKE_MAJOR_VERSION GREATER 3) OR
   cmake_policy(SET CMP0135 NEW)
 endif()
 
+if("$ENV{CI}")
+  set(USE_LOGFILES OFF)
+else()
+  set(USE_LOGFILES ON)
+endif()
+
 project(roc_pulse C CXX)
 
 include("cmake/define_option.cmake")

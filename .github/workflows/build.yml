@@ -156,7 +156,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -182,7 +182,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             ./scripts/build_and_install_roc.sh ./roc-toolkit ./roc-install aarch64-linux-gnu
@@ -214,7 +214,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -274,7 +274,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -311,7 +311,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -351,7 +351,7 @@ jobs:
       - uses: addnab/docker-run-action@v3
         with:
           image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work -w /work -eCI=1
+          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build

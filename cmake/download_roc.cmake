@@ -1,11 +1,5 @@
 include(ExternalProject)
 
-if(DEFINED ENV{CI})
-  set(USE_LOGFILES OFF)
-else()
-  set(USE_LOGFILES ON)
-endif()
-
 set(SCONS_CMD
   scons
   --prefix=${CMAKE_CURRENT_BINARY_DIR}/roc-prefix
@@ -30,7 +24,6 @@ set(SCONS_CMD
 ExternalProject_Add(roc
   GIT_REPOSITORY "https://github.com/roc-streaming/roc-toolkit.git"
   GIT_TAG "${ROC_REVISION}"
-  GIT_SHALLOW ON
   UPDATE_DISCONNECTED ON
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/roc-src"
   INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix"

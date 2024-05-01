@@ -1,11 +1,5 @@
 include(ExternalProject)
 
-if(DEFINED ENV{CI})
-  set(USE_LOGFILES OFF)
-else()
-  set(USE_LOGFILES ON)
-endif()
-
 ExternalProject_Add(pulseaudio
   URL
    "https://freedesktop.org/software/pulseaudio/releases/pulseaudio-${PULSEAUDIO_VERSION}.tar.gz"
@@ -14,7 +8,7 @@ ExternalProject_Add(pulseaudio
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
   TEST_COMMAND ""
-  LOG_DOWNLOAD ON
+  LOG_DOWNLOAD ${USE_LOGFILES}
   LOG_PATCH ${USE_LOGFILES}
   LOG_CONFIGURE ${USE_LOGFILES}
   LOG_BUILD ${USE_LOGFILES}
