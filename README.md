@@ -5,11 +5,14 @@
 <!-- toc -->
 
 - [What is this?](#what-is-this)
+- [Interoperability](#interoperability)
 - [Build instructions](#build-instructions)
 - [Running receiver](#running-receiver)
 - [Running sender](#running-sender)
-- [Setting source or sink name](#setting-source-or-sink-name)
-- [Interoperability](#interoperability)
+- [Custom audio encoding](#custom-audio-encoding)
+- [Custom FEC encoding](#custom-fec-encoding)
+- [Configuring latency](#configuring-latency)
+- [Configuring source or sink name](#configuring-source-or-sink-name)
 - [Troubleshooting](#troubleshooting)
 - [Authors](#authors)
 - [License](#license)
@@ -169,25 +172,27 @@ For the receiving side, use `module-roc-sink-input` PulseAudio module. It create
 
 Roc sink input supports several options:
 
-| option                  | required | default              | description                                                  |
-|-------------------------|----------|----------------------|--------------------------------------------------------------|
-| sink                    | no       | \<default sink\>     | the name of the sink to connect the new sink input to        |
-| sink\_input\_properties | no       | empty                | additional sink input properties                             |
-| local\_ip               | no       | 0.0.0.0              | local address to bind to                                     |
-| local\_source\_port     | no       | 10001                | local port for source (RTP) packets                          |
-| local\_repair\_port     | no       | 10002                | local port for repair (FEC) packets                          |
-| local\_control\_port    | no       | 10003                | local port for control (RTCP) packets                        |
-| fec\_encoding           | no       | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |
-| target\_latency\_msec   | no       | 200                  | target latency in milliseconds                               |
-| min\_latency\_msec      | no       | 50                   | minimum latency in milliseconds                              |
-| max\_latency\_msec      | no       | 1000                 | maximum latency in milliseconds                              |
-| io\_latency\_msec       | no       | 40                   | playback latency in milliseconds                             |
-| latency\_backend        | no       | select automatically | latency tuner backend (default, niq)                         |
-| latency\_profile        | no       | select automatically | latency tuner profile (default, intact, responsive, gradual) |
-| resampler\_backend      | no       | select automatically | resampler backend (default, builtin, speex, speexdec)        |
-| resampler\_profile      | no       | medium               | resampler profile (default, high, medium, low)               |
-
-For more information about these options, consult [C API documentation](https://roc-streaming.org/toolkit/docs/api/reference.html).
+| option                  | default              | description                                                  | note                |
+|-------------------------|----------------------|--------------------------------------------------------------|---------------------|
+| sink                    | \<default sink\>     | the name of the sink to connect the new sink input to        |                     |
+| sink\_input\_properties | empty                | additional sink input properties                             |                     |
+| local\_ip               | 0.0.0.0              | local address to bind to                                     |                     |
+| local\_source\_port     | 10001                | local port for source (RTP) packets                          |                     |
+| local\_repair\_port     | 10002                | local port for repair (FEC) packets                          |                     |
+| local\_control\_port    | 10003                | local port for control (RTCP) packets                        |                     |
+| audio\_encoding         | none                 | encoding id (any number, same on sender and receiver)        | for custom encoding |
+| audio\_rate             | none                 | encoding sample rate                                         | for custom encoding |
+| audio\_format           | none                 | encoding sample format (s16)                                 | for custom encoding |
+| audio\_chans            | none                 | encoding channel layout (mono, stereo)                       | for custom encoding |
+| fec\_encoding           | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |                     |
+| target\_latency\_msec   | 200                  | target latency in milliseconds                               |                     |
+| min\_latency\_msec      | 50                   | minimum latency in milliseconds                              |                     |
+| max\_latency\_msec      | 1000                 | maximum latency in milliseconds                              |                     |
+| io\_latency\_msec       | 40                   | playback latency in milliseconds                             |                     |
+| latency\_backend        | select automatically | latency tuner backend (default, niq)                         |                     |
+| latency\_profile        | select automatically | latency tuner profile (default, intact, responsive, gradual) |                     |
+| resampler\_backend      | select automatically | resampler backend (default, builtin, speex, speexdec)        |                     |
+| resampler\_profile      | medium               | resampler profile (default, high, medium, low)               |                     |
 
 Here is how you can create a Roc sink input from command line:
 
@@ -221,28 +226,29 @@ For the sending side, use `module-roc-sink` PulseAudio module. It creates a Puls
 
 Roc sink supports several options:
 
-| option                | required | default              | description                                                  | note                           |
-|-----------------------|----------|----------------------|--------------------------------------------------------------|--------------------------------|
-| sink\_name            | no       | roc\_sender          | the name of the new sink                                     |                                |
-| sink\_properties      | no       | empty                | additional sink properties                                   |                                |
-| remote\_ip            | **yes**  | no                   | remote receiver address                                      |                                |
-| remote\_source\_port  | no       | 10001                | remote receiver port for source (audio) packets              |                                |
-| remote\_repair\_port  | no       | 10002                | remote receiver port for repair (FEC) packets                |                                |
-| remote\_control\_port | no       | 10003                | remote receiver port for control (RTCP) packets              |                                |
-| fec\_encoding         | no       | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |                                |
-| fec\_nbsrc            | no       | 18                   | number of source packets in FEC block                        |                                |
-| fec\_nbrpr            | no       | 10                   | number of repair packets in FEC block                        |                                |
-| packet\_encoding      | no       | avp/l16/stereo       | encoding for audio packets (avp/l16/mono, avp/l16/stereo)    |                                |
-| packet\_len\_msec     | no       | 5                    | network packet length in milliseconds                        |                                |
-| target\_latency\_msec | no       | disabled             | target latency in milliseconds                               | for sender-side latency tuning |
-| min\_latency\_msec    | no       | disabled             | minimum latency in milliseconds                              | for sender-side latency tuning |
-| max\_latency\_msec    | no       | disabled             | maximum latency in milliseconds                              | for sender-side latency tuning |
-| latency\_backend      | no       | disabled             | latency tuner backend (default, niq)                         | for sender-side latency tuning |
-| latency\_profile      | no       | disabled             | latency tuner profile (default, intact, responsive, gradual) | for sender-side latency tuning |
-| resampler\_backend    | no       | select automatically | resampler backend (default, builtin, speex, speexdec)        |                                |
-| resampler\_profile    | no       | medium               | resampler profile (default, high, medium, low)               |                                |
-
-For more information about these options, consult [C API documentation](https://roc-streaming.org/toolkit/docs/api/reference.html).
+| option                | default              | description                                                  | note                           |
+|-----------------------|----------------------|--------------------------------------------------------------|--------------------------------|
+| sink\_name            | roc\_sender          | the name of the new sink                                     |                                |
+| sink\_properties      | empty                | additional sink properties                                   |                                |
+| remote\_ip            | no                   | remote receiver address                                      |                                |
+| remote\_source\_port  | 10001                | remote receiver port for source (audio) packets              |                                |
+| remote\_repair\_port  | 10002                | remote receiver port for repair (FEC) packets                |                                |
+| remote\_control\_port | 10003                | remote receiver port for control (RTCP) packets              |                                |
+| audio\_encoding       | none                 | encoding id (any number, same on sender and receiver)        | for custom encoding            |
+| audio\_rate           | none                 | encoding sample rate                                         | for custom encoding            |
+| audio\_format         | none                 | encoding sample format (s16)                                 | for custom encoding            |
+| audio\_chans          | none                 | encoding channel layout (mono, stereo)                       | for custom encoding            |
+| audio\_packet\_msec   | 5                    | audio packet length in milliseconds                          |                                |
+| fec\_encoding         | rs8m                 | encoding for FEC packets (default, disable, rs8m, ldpc)      |                                |
+| fec\_nbsrc            | 18                   | number of source packets in FEC block                        |                                |
+| fec\_nbrpr            | 10                   | number of repair packets in FEC block                        |                                |
+| target\_latency\_msec | disabled             | target latency in milliseconds                               | for sender-side latency tuning |
+| min\_latency\_msec    | disabled             | minimum latency in milliseconds                              | for sender-side latency tuning |
+| max\_latency\_msec    | disabled             | maximum latency in milliseconds                              | for sender-side latency tuning |
+| latency\_backend      | disabled             | latency tuner backend (default, niq)                         | for sender-side latency tuning |
+| latency\_profile      | disabled             | latency tuner profile (default, intact, responsive, gradual) | for sender-side latency tuning |
+| resampler\_backend    | select automatically | resampler backend (default, builtin, speex, speexdec)        |                                |
+| resampler\_profile    | medium               | resampler profile (default, high, medium, low)               |                                |
 
 Here is how you can create a Roc sink from command line:
 
@@ -266,7 +272,59 @@ Or via the `pavucontrol` graphical tool:
 
 ![image](docs/roc_pulse_sender.png)
 
-## Setting source or sink name
+## Custom audio encoding
+
+By default, `module-roc-sink-input` and `module-roc-sink` code audio as 44100Hz with 16-bit stereo.
+
+To employ alternative encoding, you need to provide the following options:
+
+* `audio_encoding` - arbitrary encoding identifier, can be any 8-bit number (e.g. 100)
+* `audio_rate` - sampling rate (e.g. 44100)
+* `audio_format` - sample format (e.g. `s16` for 16-bit signed integers)
+* `audio_chans` - channel layout (e.g. `stereo`)
+
+All four parameters should be provided on **both sender and receiver** and have **exact same values**.
+
+## Custom FEC encoding
+
+By default, `module-roc-sink-input` and `module-roc-sink` use Reed-Solomon (`rs8m`) FEC encoding for loss repair.
+
+This can be configured via `fec_encoding` parameter. Available options are:
+
+* `disable` - disable FEC
+* `rs8m` - use Reed-Solomon
+* `ldpc` - use LDPC-Staircase
+
+This parameter should be provided on **both sender and receiver** and have **exact same value**.
+
+## Configuring latency
+
+Essential receiver-side (`module-roc-sink-input`) parameters are:
+
+* `target_latency` - which latency should be maintained
+* `min_latency` - which minimum latency causes session restart
+* `max_latency` - which maximum latency causes session restart
+
+You can also force specific latency tuner settings (by default they're auto-selected based on target latency):
+
+* `latency_backend`:
+  * `niq` - tune latency based on Network Incoming Queue size
+* `latency_profile`:
+  * `intact` - disable latency tuning
+  * `responsive` - quickly react to changes; good for low latency, but also requires low network jitter
+  * `gradual` - smoothly react to changes; can handle high network jitter, but can't handle very low latency
+
+> Note: By default, latency tuning happens on receiver side. It is also possible (though rarely needed) to do it on sender side. For that reason, all parameters above are also available on sender, but are disabled by default. If you enabled them on sender, you likely want to disable them on receiver by using `intact` latency profile.
+
+There are also sender-side (`module-roc-sink`) parameters that affect latency:
+
+* `audio_packet_msec` - audio packet length
+* `fec_nbsrc` - number of audio packets in a FEC block (if FEC is enabled)
+* `fec_nbrpr` - number of redundancy packets in a FEC block (if FEC is enabled)
+
+For lower latency, you may need lower packet length and FEC block size. And vice versa, for higher latency and network jitter, you may need to increase both packet length (for less overhead) and FEC block size (for better repair).
+
+## Configuring source or sink name
 
 PulseAudio sinks and sink inputs have name and description. Name is usually used when the sink or sink input is referenced from command-line tools or configuration files, and description is shown in the GUI.
 
