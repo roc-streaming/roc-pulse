@@ -68,6 +68,14 @@ int rocpulse_parse_fec_encoding(roc_fec_encoding* out,
                                 pa_modargs* args,
                                 const char* arg_name);
 
+int rocpulse_parse_resampler_backend(roc_resampler_backend* out,
+                                     pa_modargs* args,
+                                     const char* arg_name);
+
+int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
+                                     pa_modargs* args,
+                                     const char* arg_name);
+
 #if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
 int rocpulse_parse_latency_tuner_backend(roc_latency_tuner_backend* out,
                                          pa_modargs* args,
@@ -77,14 +85,6 @@ int rocpulse_parse_latency_tuner_profile(roc_latency_tuner_profile* out,
                                          pa_modargs* args,
                                          const char* arg_name);
 #endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-
-int rocpulse_parse_resampler_backend(roc_resampler_backend* out,
-                                     pa_modargs* args,
-                                     const char* arg_name);
-
-int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
-                                     pa_modargs* args,
-                                     const char* arg_name);
 
 int rocpulse_extract_encoding(const roc_media_encoding* src_encoding,
                               pa_sample_spec* dst_sample_spec,

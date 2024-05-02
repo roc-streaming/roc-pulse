@@ -48,13 +48,13 @@ PA_MODULE_USAGE("sink_name=<name for the sink> "
                 "fec_encoding=disable|rs8m|ldpc "
                 "fec_block_nbsrc=<number of source packets in FEC block> "
                 "fec_block_nbrpr=<number of repair packets in FEC block> "
-                "target_latency_msec=<target latency in milliseconds> "
-                "min_latency_msec=<minimum latency in milliseconds> "
-                "max_latency_msec=<maximum latency in milliseconds> "
+                "resampler_backend=default|builtin|speex|speexdec "
+                "resampler_profile=default|high|medium|low "
                 "latency_backend=default|niq "
                 "latency_profile=default|intact|responsive|gradual "
-                "resampler_backend=default|builtin|speex|speexdec "
-                "resampler_profile=default|high|medium|low");
+                "target_latency_msec=<target latency in milliseconds> "
+                "min_latency_msec=<minimum latency in milliseconds> "
+                "max_latency_msec=<maximum latency in milliseconds>");
 
 struct roc_sink_userdata {
     pa_module* module;
@@ -89,13 +89,13 @@ static const char* const roc_sink_modargs[] = { //
     "fec_encoding",                             //
     "fec_block_nbsrc",                          //
     "fec_block_nbrpr",                          //
+    "resampler_backend",                        //
+    "resampler_profile",                        //
+    "latency_backend",                          //
+    "latency_profile",                          //
     "target_latency_msec",                      //
     "min_latency_msec",                         //
     "max_latency_msec",                         //
-    "latency_backend",                          //
-    "latency_profile",                          //
-    "resampler_backend",                        //
-    "resampler_profile",                        //
     NULL
 };
 
@@ -322,9 +322,27 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    if (rocpulse_parse_resampler_backend(&sender_config.resampler_backend, args,
+                                         "resampler_backend")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_resampler_profile(&sender_config.resampler_profile, args,
+                                         "resampler_profile")
+        < 0) {
+        goto error;
+    }
+
 #if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-    if (rocpulse_parse_duration_msec_ul(&sender_config.target_latency, 1, args,
-                                        "target_latency_msec", "0")
+    if (rocpulse_parse_latency_tuner_backend(&sender_config.latency_tuner_backend, args,
+                                             "latency_backend")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_latency_tuner_profile(&sender_config.latency_tuner_profile, args,
+                                             "latency_profile")
         < 0) {
         goto error;
     }
@@ -341,30 +359,12 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (rocpulse_parse_latency_tuner_backend(&sender_config.latency_tuner_backend, args,
-                                             "latency_backend")
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_latency_tuner_profile(&sender_config.latency_tuner_profile, args,
-                                             "latency_profile")
+    if (rocpulse_parse_duration_msec_ul(&sender_config.target_latency, 1, args,
+                                        "target_latency_msec", "0")
         < 0) {
         goto error;
     }
 #endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-
-    if (rocpulse_parse_resampler_backend(&sender_config.resampler_backend, args,
-                                         "resampler_backend")
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_resampler_profile(&sender_config.resampler_profile, args,
-                                         "resampler_profile")
-        < 0) {
-        goto error;
-    }
 
     /* roc sender endpoints */
     if (rocpulse_parse_endpoint(&u->remote_source_endp, ROC_INTERFACE_AUDIO_SOURCE,

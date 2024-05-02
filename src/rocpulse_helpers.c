@@ -288,48 +288,6 @@ int rocpulse_parse_fec_encoding(roc_fec_encoding* out,
     }
 }
 
-#if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-int rocpulse_parse_latency_tuner_backend(roc_latency_tuner_backend* out,
-                                         pa_modargs* args,
-                                         const char* arg_name) {
-    const char* str = pa_modargs_get_value(args, arg_name, "");
-
-    if (!str || !*str || strcmp(str, "default") == 0) {
-        *out = ROC_LATENCY_TUNER_BACKEND_DEFAULT;
-        return 0;
-    } else if (strcmp(str, "niq") == 0) {
-        *out = ROC_LATENCY_TUNER_BACKEND_NIQ;
-        return 0;
-    } else {
-        pa_log("invalid %s: %s", arg_name, str);
-        return -1;
-    }
-}
-
-int rocpulse_parse_latency_tuner_profile(roc_latency_tuner_profile* out,
-                                         pa_modargs* args,
-                                         const char* arg_name) {
-    const char* str = pa_modargs_get_value(args, arg_name, "");
-
-    if (!str || !*str || strcmp(str, "default") == 0) {
-        *out = ROC_LATENCY_TUNER_PROFILE_DEFAULT;
-        return 0;
-    } else if (strcmp(str, "intact") == 0) {
-        *out = ROC_LATENCY_TUNER_PROFILE_INTACT;
-        return 0;
-    } else if (strcmp(str, "responsive") == 0) {
-        *out = ROC_LATENCY_TUNER_PROFILE_RESPONSIVE;
-        return 0;
-    } else if (strcmp(str, "gradual") == 0) {
-        *out = ROC_LATENCY_TUNER_PROFILE_GRADUAL;
-        return 0;
-    } else {
-        pa_log("invalid %s: %s", arg_name, str);
-        return -1;
-    }
-}
-#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-
 int rocpulse_parse_resampler_backend(roc_resampler_backend* out,
                                      pa_modargs* args,
                                      const char* arg_name) {
@@ -375,6 +333,48 @@ int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
         return -1;
     }
 }
+
+#if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+int rocpulse_parse_latency_tuner_backend(roc_latency_tuner_backend* out,
+                                         pa_modargs* args,
+                                         const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_LATENCY_TUNER_BACKEND_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "niq") == 0) {
+        *out = ROC_LATENCY_TUNER_BACKEND_NIQ;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+
+int rocpulse_parse_latency_tuner_profile(roc_latency_tuner_profile* out,
+                                         pa_modargs* args,
+                                         const char* arg_name) {
+    const char* str = pa_modargs_get_value(args, arg_name, "");
+
+    if (!str || !*str || strcmp(str, "default") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_DEFAULT;
+        return 0;
+    } else if (strcmp(str, "intact") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_INTACT;
+        return 0;
+    } else if (strcmp(str, "responsive") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_RESPONSIVE;
+        return 0;
+    } else if (strcmp(str, "gradual") == 0) {
+        *out = ROC_LATENCY_TUNER_PROFILE_GRADUAL;
+        return 0;
+    } else {
+        pa_log("invalid %s: %s", arg_name, str);
+        return -1;
+    }
+}
+#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
 
 int rocpulse_extract_encoding(const roc_media_encoding* src_encoding,
                               pa_sample_spec* dst_sample_spec,

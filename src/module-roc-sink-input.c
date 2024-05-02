@@ -43,14 +43,16 @@ PA_MODULE_USAGE("sink=<name for the sink> "
                 "packet_encoding_format=s16 "
                 "packet_encoding_chans=mono|stereo "
                 "fec_encoding=disable|rs8m|ldpc "
+                "resampler_backend=default|builtin|speex|speexdec "
+                "resampler_profile=default|high|medium|low "
+                "latency_backend=default|niq "
+                "latency_profile=default|intact|responsive|gradual "
                 "target_latency_msec=<target latency in milliseconds> "
                 "min_latency_msec=<minimum latency in milliseconds> "
                 "max_latency_msec=<maximum latency in milliseconds> "
                 "io_latency_msec=<playback latency in milliseconds> "
-                "latency_backend=default|niq "
-                "latency_profile=default|intact|responsive|gradual "
-                "resampler_backend=default|builtin|speex|speexdec "
-                "resampler_profile=default|high|medium|low");
+                "no_play_timeout_msec=<no playback timeout in milliseconds> "
+                "choppy_play_timeout_msec=<choppy playback timeout in milliseconds>");
 
 struct roc_sink_input_userdata {
     pa_module* module;
@@ -77,14 +79,16 @@ static const char* const roc_sink_input_modargs[] = { //
     "packet_encoding_format",                         //
     "packet_encoding_chans",                          //
     "fec_encoding",                                   //
+    "resampler_backend",                              //
+    "resampler_profile",                              //
+    "latency_backend",                                //
+    "latency_profile",                                //
     "target_latency_msec",                            //
     "min_latency_msec",                               //
     "max_latency_msec",                               //
     "io_latency_msec",                                //
-    "latency_backend",                                //
-    "latency_profile",                                //
-    "resampler_backend",                              //
-    "resampler_profile",                              //
+    "no_play_timeout_msec",                           //
+    "choppy_play_timeout_msec",                       //
     NULL
 };
 
@@ -253,25 +257,19 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (rocpulse_parse_duration_msec_ul(&receiver_config.target_latency, 1, args,
-                                        "target_latency_msec", "0")
+    if (rocpulse_parse_resampler_backend(&receiver_config.resampler_backend, args,
+                                         "resampler_backend")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_resampler_profile(&receiver_config.resampler_profile, args,
+                                         "resampler_profile")
         < 0) {
         goto error;
     }
 
 #if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
-    if (rocpulse_parse_duration_msec_ll(&receiver_config.min_latency, 1, args,
-                                        "min_latency_msec", "0")
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_duration_msec_ll(&receiver_config.max_latency, 1, args,
-                                        "max_latency_msec", "0")
-        < 0) {
-        goto error;
-    }
-
     if (rocpulse_parse_latency_tuner_backend(&receiver_config.latency_tuner_backend, args,
                                              "latency_backend")
         < 0) {
@@ -283,16 +281,34 @@ int pa__init(pa_module* m) {
         < 0) {
         goto error;
     }
-#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
 
-    if (rocpulse_parse_resampler_backend(&receiver_config.resampler_backend, args,
-                                         "resampler_backend")
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.min_latency, 1, args,
+                                        "min_latency_msec", "0")
         < 0) {
         goto error;
     }
 
-    if (rocpulse_parse_resampler_profile(&receiver_config.resampler_profile, args,
-                                         "resampler_profile")
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.max_latency, 1, args,
+                                        "max_latency_msec", "0")
+        < 0) {
+        goto error;
+    }
+#endif // ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
+
+    if (rocpulse_parse_duration_msec_ul(&receiver_config.target_latency, 1, args,
+                                        "target_latency_msec", "0")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.no_playback_timeout, 1, args,
+                                        "no_play_timeout_msec", "0")
+        < 0) {
+        goto error;
+    }
+
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.choppy_playback_timeout, 1, args,
+                                        "choppy_play_timeout_msec", "0")
         < 0) {
         goto error;
     }
