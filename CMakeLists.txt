@@ -228,10 +228,16 @@ foreach(MODULE IN LISTS ALL_MODULES)
   )
 endforeach()
 
-add_custom_target(compile_commands ALL
-  DEPENDS ${ALL_MODULES}
-  COMMENT "Copying compile_commands.json to project root"
-  COMMAND "${CMAKE_COMMAND}" -E copy
-    "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
-    "${PROJECT_SOURCE_DIR}/compile_commands.json"
+if(NOT CMAKE_CROSSCOMPILING)
+  add_custom_command(
+    COMMENT "Copying compile_commands.json to project root"
+    DEPENDS ${ALL_MODULES}
+    OUTPUT "${PROJECT_SOURCE_DIR}/compile_commands.json"
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json"
+      "${PROJECT_SOURCE_DIR}/compile_commands.json"
   )
+  add_custom_target(compile_commands ALL
+    DEPENDS "${PROJECT_SOURCE_DIR}/compile_commands.json"
+  )
+endif()
