@@ -34,10 +34,14 @@ PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink=<name for the sink> "
                 "sink_input_properties=<properties for the sink input> "
-                "audio_encoding=<8-bit number> "
-                "audio_rate=<sample rate> "
-                "audio_format=s16 "
-                "audio_chans=mono|stereo "
+                "local_ip=<local receiver ip> "
+                "local_source_port=<local receiver port for source (RTP) packets> "
+                "local_repair_port=<local receiver port for repair (FEC) packets> "
+                "local_control_port=<local receiver port for control (RTCP) packets> "
+                "packet_encoding_id=<8-bit number> "
+                "packet_encoding_rate=<sample rate> "
+                "packet_encoding_format=s16 "
+                "packet_encoding_chans=mono|stereo "
                 "fec_encoding=disable|rs8m|ldpc "
                 "target_latency_msec=<target latency in milliseconds> "
                 "min_latency_msec=<minimum latency in milliseconds> "
@@ -46,11 +50,7 @@ PA_MODULE_USAGE("sink=<name for the sink> "
                 "latency_backend=default|niq "
                 "latency_profile=default|intact|responsive|gradual "
                 "resampler_backend=default|builtin|speex|speexdec "
-                "resampler_profile=default|high|medium|low "
-                "local_ip=<local receiver ip> "
-                "local_source_port=<local receiver port for source (RTP) packets> "
-                "local_repair_port=<local receiver port for repair (FEC) packets> "
-                "local_control_port=<local receiver port for control (RTCP) packets>");
+                "resampler_profile=default|high|medium|low");
 
 struct roc_sink_input_userdata {
     pa_module* module;
@@ -68,10 +68,14 @@ static const char* const roc_sink_input_modargs[] = { //
     "sink",                                           //
     "sink_input_name",                                //
     "sink_input_properties",                          //
-    "audio_encoding",                                 //
-    "audio_rate",                                     //
-    "audio_format",                                   //
-    "audio_chans",                                    //
+    "local_ip",                                       //
+    "local_source_port",                              //
+    "local_repair_port",                              //
+    "local_control_port",                             //
+    "packet_encoding_id",                             //
+    "packet_encoding_rate",                           //
+    "packet_encoding_format",                         //
+    "packet_encoding_chans",                          //
     "fec_encoding",                                   //
     "target_latency_msec",                            //
     "min_latency_msec",                               //
@@ -81,10 +85,6 @@ static const char* const roc_sink_input_modargs[] = { //
     "latency_profile",                                //
     "resampler_backend",                              //
     "resampler_profile",                              //
-    "local_ip",                                       //
-    "local_source_port",                              //
-    "local_repair_port",                              //
-    "local_control_port",                             //
     NULL
 };
 
@@ -221,19 +221,19 @@ int pa__init(pa_module* m) {
 
     /* audio encoding */
     roc_packet_encoding receiver_packet_encoding = 0;
-    int need_registration = 0;
 
-    if (rocpulse_parse_packet_encoding(&receiver_packet_encoding, &need_registration,
-                                       args, "audio_encoding")
+    if (rocpulse_parse_packet_encoding(&receiver_packet_encoding, args,
+                                       "packet_encoding_id")
         < 0) {
         goto error;
     }
 
-    if (need_registration) {
+    if (receiver_packet_encoding != 0) {
         roc_media_encoding encoding;
 
-        if (rocpulse_parse_media_encoding(&encoding, args, "audio_rate", "audio_format",
-                                          "audio_chans")
+        if (rocpulse_parse_media_encoding(&encoding, args, "packet_encoding_rate",
+                                          "packet_encoding_format",
+                                          "packet_encoding_chans")
             < 0) {
             goto error;
         }
@@ -261,20 +261,20 @@ int pa__init(pa_module* m) {
     receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
     if (rocpulse_parse_duration_msec_ul(&receiver_config.target_latency, 1, args,
-                                        "target_latency_msec", "200")
+                                        "target_latency_msec", "0")
         < 0) {
         goto error;
     }
 
 #if ROC_VERSION >= ROC_VERSION_CODE(0, 4, 0)
     if (rocpulse_parse_duration_msec_ll(&receiver_config.min_latency, 1, args,
-                                        "min_latency_msec", "50")
+                                        "min_latency_msec", "0")
         < 0) {
         goto error;
     }
 
     if (rocpulse_parse_duration_msec_ll(&receiver_config.max_latency, 1, args,
-                                        "max_latency_msec", "1000")
+                                        "max_latency_msec", "0")
         < 0) {
         goto error;
     }

@@ -204,14 +204,12 @@ int rocpulse_parse_duration_msec_ll(long long* out,
 }
 
 int rocpulse_parse_packet_encoding(roc_packet_encoding* out,
-                                   int* need_registration,
                                    pa_modargs* args,
                                    const char* arg_name) {
     const char* str = pa_modargs_get_value(args, arg_name, "");
 
     if (!str || !*str) {
         *out = 0;
-        *need_registration = 0;
         return 0;
     } else {
         char* end = NULL;
@@ -221,13 +219,12 @@ int rocpulse_parse_packet_encoding(roc_packet_encoding* out,
             return -1;
         }
 
-        if (num < 0 || (num > 0 && (long)num > (long)INT_MAX)) {
+        if (num <= 0 || num >= 256) {
             pa_log("invalid %s: out of range: %s", arg_name, str);
             return -1;
         }
 
         *out = (int)num;
-        *need_registration = 1;
         return 0;
     }
 }

@@ -36,25 +36,25 @@ PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
 PA_MODULE_USAGE("sink_name=<name for the sink> "
                 "sink_properties=<properties for the sink> "
-                "audio_encoding=<8-bit number> "
-                "audio_rate=<sample rate> "
-                "audio_format=s16 "
-                "audio_chans=mono|stereo "
-                "audio_packet_msec=<audio packet length in milliseconds> "
+                "remote_ip=<remote receiver ip> "
+                "remote_source_port=<remote receiver port for source (RTP) packets> "
+                "remote_repair_port=<remote receiver port for repair (FEC) packets>"
+                "remote_control_port=<remote receiver port for control (RTCP) packets> "
+                "packet_encoding_id=<8-bit number> "
+                "packet_encoding_rate=<sample rate> "
+                "packet_encoding_format=s16 "
+                "packet_encoding_chans=mono|stereo "
+                "packet_length_msec=<audio packet length in milliseconds> "
                 "fec_encoding=disable|rs8m|ldpc "
-                "fec_nbsrc=<number of source packets in FEC block> "
-                "fec_nbrpr=<number of repair packets in FEC block> "
+                "fec_block_nbsrc=<number of source packets in FEC block> "
+                "fec_block_nbrpr=<number of repair packets in FEC block> "
                 "target_latency_msec=<target latency in milliseconds> "
                 "min_latency_msec=<minimum latency in milliseconds> "
                 "max_latency_msec=<maximum latency in milliseconds> "
                 "latency_backend=default|niq "
                 "latency_profile=default|intact|responsive|gradual "
                 "resampler_backend=default|builtin|speex|speexdec "
-                "resampler_profile=default|high|medium|low "
-                "remote_ip=<remote receiver ip> "
-                "remote_source_port=<remote receiver port for source (RTP) packets> "
-                "remote_repair_port=<remote receiver port for repair (FEC) packets>"
-                "remote_control_port=<remote receiver port for control (RTCP) packets>");
+                "resampler_profile=default|high|medium|low");
 
 struct roc_sink_userdata {
     pa_module* module;
@@ -77,14 +77,18 @@ struct roc_sink_userdata {
 static const char* const roc_sink_modargs[] = { //
     "sink_name",                                //
     "sink_properties",                          //
-    "audio_encoding",                           //
-    "audio_rate",                               //
-    "audio_format",                             //
-    "audio_chans",                              //
-    "audio_packet_msec",                        //
+    "remote_ip",                                //
+    "remote_source_port",                       //
+    "remote_repair_port",                       //
+    "remote_control_port",                      //
+    "packet_encoding_id",                       //
+    "packet_encoding_rate",                     //
+    "packet_encoding_format",                   //
+    "packet_encoding_chans",                    //
+    "packet_length_msec",                       //
     "fec_encoding",                             //
-    "fec_nbsrc",                                //
-    "fec_nbrpr",                                //
+    "fec_block_nbsrc",                          //
+    "fec_block_nbrpr",                          //
     "target_latency_msec",                      //
     "min_latency_msec",                         //
     "max_latency_msec",                         //
@@ -92,10 +96,6 @@ static const char* const roc_sink_modargs[] = { //
     "latency_profile",                          //
     "resampler_backend",                        //
     "resampler_profile",                        //
-    "remote_ip",                                //
-    "remote_source_port",                       //
-    "remote_repair_port",                       //
-    "remote_control_port",                      //
     NULL
 };
 
@@ -280,19 +280,18 @@ int pa__init(pa_module* m) {
     sender_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
     sender_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
-    int need_registration = 0;
-
-    if (rocpulse_parse_packet_encoding(&sender_config.packet_encoding, &need_registration,
-                                       args, "audio_encoding")
+    if (rocpulse_parse_packet_encoding(&sender_config.packet_encoding, args,
+                                       "packet_encoding_id")
         < 0) {
         goto error;
     }
 
-    if (need_registration) {
+    if (sender_config.packet_encoding != 0) {
         roc_media_encoding encoding;
 
-        if (rocpulse_parse_media_encoding(&encoding, args, "audio_rate", "audio_format",
-                                          "audio_chans")
+        if (rocpulse_parse_media_encoding(&encoding, args, "packet_encoding_rate",
+                                          "packet_encoding_format",
+                                          "packet_encoding_chans")
             < 0) {
             goto error;
         }
@@ -306,7 +305,7 @@ int pa__init(pa_module* m) {
     }
 
     if (rocpulse_parse_duration_msec_ul(&sender_config.packet_length, 1, args,
-                                        "audio_packet_msec", "0")
+                                        "packet_length_msec", "0")
         < 0) {
         goto error;
     }
@@ -316,14 +315,14 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (rocpulse_parse_uint(&sender_config.fec_block_source_packets, args, "fec_nbsrc",
-                            "0")
+    if (rocpulse_parse_uint(&sender_config.fec_block_source_packets, args,
+                            "fec_block_nbsrc", "0")
         < 0) {
         goto error;
     }
 
-    if (rocpulse_parse_uint(&sender_config.fec_block_repair_packets, args, "fec_nbrpr",
-                            "0")
+    if (rocpulse_parse_uint(&sender_config.fec_block_repair_packets, args,
+                            "fec_block_nbrpr", "0")
         < 0) {
         goto error;
     }
