@@ -238,15 +238,6 @@ int pa__init(pa_module* m) {
     roc_log_set_level(ROC_LOG_DEBUG);
     roc_log_set_handler(rocpulse_log_handler, NULL);
 
-    /* prepare sample spec and channel map used in this sink */
-    pa_sample_spec sample_spec;
-    sample_spec.format = PA_SAMPLE_FLOAT32LE;
-    sample_spec.rate = 44100;
-    sample_spec.channels = 2;
-
-    pa_channel_map channel_map;
-    pa_channel_map_init_stereo(&channel_map);
-
     /* get module arguments (key-value list passed to load-module) */
     pa_modargs* args;
     if (!(args = pa_modargs_new(m->argument, roc_sink_modargs))) {
@@ -302,6 +293,10 @@ int pa__init(pa_module* m) {
             pa_log("can't register packet encoding");
             goto error;
         }
+
+        /* propagate packet encoding to sink */
+        sender_config.frame_encoding.rate = encoding.rate;
+        sender_config.frame_encoding.channels = encoding.channels;
     }
 
     if (rocpulse_parse_duration_msec_ul(&sender_config.packet_length, 1, args,
@@ -424,10 +419,20 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    /* prepare sample spec and channel map used for sink */
+    pa_sample_spec sample_spec;
+    pa_channel_map channel_map;
+
+    if (rocpulse_extract_encoding(&sender_config.frame_encoding, &sample_spec,
+                                  &channel_map)
+        < 0) {
+        goto error;
+    }
+
     /* create and initialize sink */
     pa_sink_new_data data;
     pa_sink_new_data_init(&data);
-    data.driver = "roc_sink";
+    data.driver = "roc-sink";
     data.module = m;
     pa_sink_new_data_set_name(&data,
                               pa_modargs_get_value(args, "sink_name", "roc_sender"));

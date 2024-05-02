@@ -85,3 +85,7 @@ int rocpulse_parse_resampler_backend(roc_resampler_backend* out,
 int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
                                      pa_modargs* args,
                                      const char* arg_name);
+
+int rocpulse_extract_encoding(const roc_media_encoding* src_encoding,
+                              pa_sample_spec* dst_sample_spec,
+                              pa_channel_map* dst_channel_map);

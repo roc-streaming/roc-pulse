@@ -180,10 +180,10 @@ Roc sink input supports several options:
 | local\_source\_port      | 10001                  | local port for source (RTP) packets                          |                     |
 | local\_repair\_port      | 10002                  | local port for repair (FEC) packets                          |                     |
 | local\_control\_port     | 10003                  | local port for control (RTCP) packets                        |                     |
-| packet\_encoding_id      | none                   | encoding id (any number, same on sender and receiver)        | for custom encoding |
-| packet\_encoding\_rate   | none                   | encoding sample rate                                         | for custom encoding |
-| packet\_encoding\_format | none                   | encoding sample format (s16)                                 | for custom encoding |
-| packet\_encoding\_chans  | none                   | encoding channel layout (mono, stereo)                       | for custom encoding |
+| packet\_encoding_id      | 10                     | encoding id (any number, same on sender and receiver)        | for custom encoding |
+| packet\_encoding\_rate   | 44100                  | encoding sample rate                                         | for custom encoding |
+| packet\_encoding\_format | s16                    | encoding sample format (s16)                                 | for custom encoding |
+| packet\_encoding\_chans  | stereo                 | encoding channel layout (mono, stereo)                       | for custom encoding |
 | fec\_encoding            | rs8m                   | encoding for FEC packets (default, disable, rs8m, ldpc)      |                     |
 | target\_latency\_msec    | 200                    | target latency in milliseconds                               |                     |
 | min\_latency\_msec       | selected automatically | minimum latency in milliseconds                              |                     |
@@ -234,10 +234,10 @@ Roc sink supports several options:
 | remote\_source\_port     | 10001                  | remote receiver port for source (audio) packets              |                                |
 | remote\_repair\_port     | 10002                  | remote receiver port for repair (FEC) packets                |                                |
 | remote\_control\_port    | 10003                  | remote receiver port for control (RTCP) packets              |                                |
-| packet\_encoding_id      | none                   | encoding id (any number, same on sender and receiver)        | for custom encoding            |
-| packet\_encoding\_rate   | none                   | encoding sample rate                                         | for custom encoding            |
-| packet\_encoding\_format | none                   | encoding sample format (s16)                                 | for custom encoding            |
-| packet\_encoding\_chans  | none                   | encoding channel layout (mono, stereo)                       | for custom encoding            |
+| packet\_encoding_id      | 10                     | encoding id (any number, same on sender and receiver)        | for custom encoding            |
+| packet\_encoding\_rate   | 44100                  | encoding sample rate                                         | for custom encoding            |
+| packet\_encoding\_format | s16                    | encoding sample format (s16)                                 | for custom encoding            |
+| packet\_encoding\_chans  | stereo                 | encoding channel layout (mono, stereo)                       | for custom encoding            |
 | packet\_length\_msec     | 5                      | audio packet length in milliseconds                          |                                |
 | fec\_encoding            | rs8m                   | encoding for FEC packets (default, disable, rs8m, ldpc)      |                                |
 | fec\_block\_nbsrc        | 18                     | number of source packets in FEC block                        |                                |

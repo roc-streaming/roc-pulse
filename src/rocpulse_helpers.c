@@ -375,3 +375,27 @@ int rocpulse_parse_resampler_profile(roc_resampler_profile* out,
         return -1;
     }
 }
+
+int rocpulse_extract_encoding(const roc_media_encoding* src_encoding,
+                              pa_sample_spec* dst_sample_spec,
+                              pa_channel_map* dst_channel_map) {
+    switch (src_encoding->channels) {
+    case ROC_CHANNEL_LAYOUT_MONO:
+        pa_channel_map_init_mono(dst_channel_map);
+        break;
+
+    case ROC_CHANNEL_LAYOUT_STEREO:
+        pa_channel_map_init_stereo(dst_channel_map);
+        break;
+
+    case ROC_CHANNEL_LAYOUT_MULTITRACK:
+        pa_log("can't select channel map");
+        return -1;
+    }
+
+    dst_sample_spec->format = PA_SAMPLE_FLOAT32LE;
+    dst_sample_spec->rate = src_encoding->rate;
+    dst_sample_spec->channels = dst_channel_map->channels;
+
+    return 0;
+}

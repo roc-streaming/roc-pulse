@@ -179,15 +179,6 @@ int pa__init(pa_module* m) {
     roc_log_set_level(ROC_LOG_DEBUG);
     roc_log_set_handler(rocpulse_log_handler, NULL);
 
-    /* prepare sample spec and channel map used in this sink */
-    pa_sample_spec sample_spec;
-    sample_spec.format = PA_SAMPLE_FLOAT32LE;
-    sample_spec.rate = 44100;
-    sample_spec.channels = 2;
-
-    pa_channel_map channel_map;
-    pa_channel_map_init_stereo(&channel_map);
-
     /* get module arguments (key-value list passed to load-module) */
     pa_modargs* args;
     if (!(args = pa_modargs_new(m->argument, roc_sink_input_modargs))) {
@@ -219,7 +210,14 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    /* audio encoding */
+    /* roc receiver config */
+    roc_receiver_config receiver_config;
+    memset(&receiver_config, 0, sizeof(receiver_config));
+
+    receiver_config.frame_encoding.rate = 44100;
+    receiver_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
+    receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
+
     roc_packet_encoding receiver_packet_encoding = 0;
 
     if (rocpulse_parse_packet_encoding(&receiver_packet_encoding, args,
@@ -243,22 +241,17 @@ int pa__init(pa_module* m) {
             pa_log("can't register packet encoding");
             goto error;
         }
+
+        /* propagate packet encoding to sink input */
+        receiver_config.frame_encoding.rate = encoding.rate;
+        receiver_config.frame_encoding.channels = encoding.channels;
     }
 
-    /* fec encoding */
     roc_fec_encoding receiver_fec_encoding = ROC_FEC_ENCODING_DEFAULT;
 
     if (rocpulse_parse_fec_encoding(&receiver_fec_encoding, args, "fec_encoding") < 0) {
         goto error;
     }
-
-    /* roc receiver config */
-    roc_receiver_config receiver_config;
-    memset(&receiver_config, 0, sizeof(receiver_config));
-
-    receiver_config.frame_encoding.rate = 44100;
-    receiver_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
-    receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
 
     if (rocpulse_parse_duration_msec_ul(&receiver_config.target_latency, 1, args,
                                         "target_latency_msec", "0")
@@ -360,6 +353,16 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
+    /* prepare sample spec and channel map used for sink input */
+    pa_sample_spec sample_spec;
+    pa_channel_map channel_map;
+
+    if (rocpulse_extract_encoding(&receiver_config.frame_encoding, &sample_spec,
+                                  &channel_map)
+        < 0) {
+        goto error;
+    }
+
     /* create and initialize sink input */
     pa_sink_input_new_data data;
     pa_sink_input_new_data_init(&data);
@@ -368,7 +371,7 @@ int pa__init(pa_module* m) {
 #else
     pa_sink_input_new_data_set_sink(&data, sink, false);
 #endif
-    data.driver = "roc_receiver";
+    data.driver = "roc-sink-input";
     data.module = u->module;
     pa_sink_input_new_data_set_sample_spec(&data, &sample_spec);
     pa_sink_input_new_data_set_channel_map(&data, &channel_map);
