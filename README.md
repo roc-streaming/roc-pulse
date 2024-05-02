@@ -138,7 +138,7 @@ In these commands, `TOOLCHAIN_PREFIX` defines toolchain triple of the target sys
 
 For more complicated cases, refer to [standard instructions](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html) for cross-compiling using CMake.
 
-### Prebuilt toolchains
+### Pre-built toolchains
 
 You can use one of our docker images with prebuilt cross-compilation toolchains. The commands below will cross-compile PulseAudio modules and install them to `./bin`.
 
@@ -232,7 +232,7 @@ Roc sink supports several options:
 |--------------------------|------------------------|--------------------------------------------------------------|-------------------------------|
 | sink\_name               | roc\_sender            | the name of the new sink                                     |                               |
 | sink\_properties         | empty                  | additional sink properties                                   |                               |
-| remote\_ip               | no                     | remote receiver address                                      |                               |
+| remote\_ip               | required parameter     | remote receiver address                                      |                               |
 | remote\_source\_port     | 10001                  | remote receiver port for source (audio) packets              |                               |
 | remote\_repair\_port     | 10002                  | remote receiver port for repair (FEC) packets                |                               |
 | remote\_control\_port    | 10003                  | remote receiver port for control (RTCP) packets              |                               |
