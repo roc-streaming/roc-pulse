@@ -32,12 +32,15 @@ PA_MODULE_AUTHOR("Roc Streaming authors");
 PA_MODULE_DESCRIPTION("Read audio stream from Roc receiver");
 PA_MODULE_VERSION(PACKAGE_VERSION);
 PA_MODULE_LOAD_ONCE(false);
-PA_MODULE_USAGE("sink=<name for the sink> "
-                "sink_input_properties=<properties for the sink input> "
-                "local_ip=<local receiver ip> "
+PA_MODULE_USAGE("local_ip=<local receiver ip> "
                 "local_source_port=<local receiver port for source (RTP) packets> "
                 "local_repair_port=<local receiver port for repair (FEC) packets> "
                 "local_control_port=<local receiver port for control (RTCP) packets> "
+                "sink=<name for the sink> "
+                "sink_input_properties=<properties for the sink input> "
+                "sink_input_rate<sample rate> "
+                "sink_input_format=f32 "
+                "sink_input_chans=mono|stereo "
                 "packet_encoding_id=<8-bit number> "
                 "packet_encoding_rate=<sample rate> "
                 "packet_encoding_format=s16 "
@@ -66,30 +69,33 @@ struct roc_sink_input_userdata {
     roc_receiver* receiver;
 };
 
-static const char* const roc_sink_input_modargs[] = { //
-    "sink",                                           //
-    "sink_input_name",                                //
-    "sink_input_properties",                          //
-    "local_ip",                                       //
-    "local_source_port",                              //
-    "local_repair_port",                              //
-    "local_control_port",                             //
-    "packet_encoding_id",                             //
-    "packet_encoding_rate",                           //
-    "packet_encoding_format",                         //
-    "packet_encoding_chans",                          //
-    "fec_encoding",                                   //
-    "resampler_backend",                              //
-    "resampler_profile",                              //
-    "latency_backend",                                //
-    "latency_profile",                                //
-    "target_latency_msec",                            //
-    "min_latency_msec",                               //
-    "max_latency_msec",                               //
-    "io_latency_msec",                                //
-    "no_play_timeout_msec",                           //
-    "choppy_play_timeout_msec",                       //
-    NULL
+static const char* const roc_sink_input_modargs[] = {
+    "local_ip",
+    "local_source_port",
+    "local_repair_port",
+    "local_control_port",
+    "sink",
+    "sink_input_name",
+    "sink_input_properties",
+    "sink_rate",
+    "sink_format",
+    "sink_chans",
+    "packet_encoding_id",
+    "packet_encoding_rate",
+    "packet_encoding_format",
+    "packet_encoding_chans",
+    "fec_encoding",
+    "resampler_backend",
+    "resampler_profile",
+    "latency_backend",
+    "latency_profile",
+    "target_latency_msec",
+    "min_latency_msec",
+    "max_latency_msec",
+    "io_latency_msec",
+    "no_play_timeout_msec",
+    "choppy_play_timeout_msec",
+    NULL,
 };
 
 static int process_message(
@@ -218,9 +224,12 @@ int pa__init(pa_module* m) {
     roc_receiver_config receiver_config;
     memset(&receiver_config, 0, sizeof(receiver_config));
 
-    receiver_config.frame_encoding.rate = 44100;
-    receiver_config.frame_encoding.channels = ROC_CHANNEL_LAYOUT_STEREO;
-    receiver_config.frame_encoding.format = ROC_FORMAT_PCM_FLOAT32;
+    if (rocpulse_parse_media_encoding(&receiver_config.frame_encoding, args,
+                                      "sink_input_rate", "sink_input_format",
+                                      "sink_input_chans")
+        < 0) {
+        goto error;
+    }
 
     roc_packet_encoding receiver_packet_encoding = 0;
 
@@ -232,6 +241,7 @@ int pa__init(pa_module* m) {
 
     if (receiver_packet_encoding != 0) {
         roc_media_encoding encoding;
+        memset(&encoding, 0, sizeof(encoding));
 
         if (rocpulse_parse_media_encoding(&encoding, args, "packet_encoding_rate",
                                           "packet_encoding_format",
@@ -245,10 +255,6 @@ int pa__init(pa_module* m) {
             pa_log("can't register packet encoding");
             goto error;
         }
-
-        /* propagate packet encoding to sink input */
-        receiver_config.frame_encoding.rate = encoding.rate;
-        receiver_config.frame_encoding.channels = encoding.channels;
     }
 
     roc_fec_encoding receiver_fec_encoding = ROC_FEC_ENCODING_DEFAULT;

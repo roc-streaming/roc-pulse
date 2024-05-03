@@ -234,10 +234,18 @@ int rocpulse_parse_media_encoding(roc_media_encoding* out,
                                   const char* rate_arg_name,
                                   const char* format_arg_name,
                                   const char* chans_arg_name) {
-    memset(out, 0, sizeof(*out));
-
     /* rate */
     if (rocpulse_parse_uint(&out->rate, args, rate_arg_name, "44100") < 0) {
+        return -1;
+    }
+
+    /* format */
+    const char* format = pa_modargs_get_value(args, format_arg_name, "s16");
+    if (!format || !*format || strcmp(format, "s16") == 0 || strcmp(format, "f32") == 0) {
+        // TODO: properly handle format when roc-toolkit is fixed
+        out->format = ROC_FORMAT_PCM_FLOAT32;
+    } else {
+        pa_log("invalid %s: %s", format_arg_name, format);
         return -1;
     }
 
@@ -249,16 +257,6 @@ int rocpulse_parse_media_encoding(roc_media_encoding* out,
         out->channels = ROC_CHANNEL_LAYOUT_MONO;
     } else {
         pa_log("invalid %s: %s", chans_arg_name, chans);
-        return -1;
-    }
-
-    /* format */
-    const char* format = pa_modargs_get_value(args, format_arg_name, "s16");
-    if (!format || !*format || strcmp(format, "s16") == 0) {
-        // TODO: use proper format when roc API is fixed
-        out->format = ROC_FORMAT_PCM_FLOAT32;
-    } else {
-        pa_log("invalid %s: %s", format_arg_name, format);
         return -1;
     }
 
@@ -393,7 +391,12 @@ int rocpulse_extract_encoding(const roc_media_encoding* src_encoding,
         return -1;
     }
 
-    dst_sample_spec->format = PA_SAMPLE_FLOAT32LE;
+    switch (src_encoding->format) {
+    case ROC_FORMAT_PCM_FLOAT32:
+        dst_sample_spec->format = PA_SAMPLE_FLOAT32LE;
+        break;
+    }
+
     dst_sample_spec->rate = src_encoding->rate;
     dst_sample_spec->channels = dst_channel_map->channels;
 
