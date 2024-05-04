@@ -38,7 +38,7 @@ PA_MODULE_USAGE("local_ip=<local receiver ip> "
                 "local_control_port=<local receiver port for control (RTCP) packets> "
                 "sink=<name for the sink> "
                 "sink_input_properties=<properties for the sink input> "
-                "sink_input_rate<sample rate> "
+                "sink_input_rate=<sample rate> "
                 "sink_input_format=f32 "
                 "sink_input_chans=mono|stereo "
                 "packet_encoding_id=<8-bit number> "
@@ -77,9 +77,9 @@ static const char* const roc_sink_input_modargs[] = {
     "sink",
     "sink_input_name",
     "sink_input_properties",
-    "sink_rate",
-    "sink_format",
-    "sink_chans",
+    "sink_input_rate",
+    "sink_input_format",
+    "sink_input_chans",
     "packet_encoding_id",
     "packet_encoding_rate",
     "packet_encoding_format",

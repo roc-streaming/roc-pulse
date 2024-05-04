@@ -40,7 +40,7 @@ PA_MODULE_USAGE("remote_ip=<remote receiver ip> "
                 "remote_control_port=<remote receiver port for control (RTCP) packets> "
                 "sink_name=<name for the sink> "
                 "sink_properties=<properties for the sink> "
-                "sink_rate<sample rate> "
+                "sink_rate=<sample rate> "
                 "sink_format=f32 "
                 "sink_chans=mono|stereo "
                 "packet_encoding_id=<8-bit number> "
@@ -285,7 +285,9 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (sender_config.packet_encoding != 0) {
+    if (sender_config.packet_encoding == 0) {
+        sender_config.packet_encoding = ROC_PACKET_ENCODING_AVP_L16_STEREO;
+    } else {
         roc_media_encoding encoding;
         memset(&encoding, 0, sizeof(encoding));
 

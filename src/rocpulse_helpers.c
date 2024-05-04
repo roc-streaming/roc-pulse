@@ -253,7 +253,7 @@ int rocpulse_parse_media_encoding(roc_media_encoding* out,
     const char* chans = pa_modargs_get_value(args, chans_arg_name, "stereo");
     if (!chans || !*chans || strcmp(chans, "stereo") == 0) {
         out->channels = ROC_CHANNEL_LAYOUT_STEREO;
-    } else if (strcmp(chans, "mono")) {
+    } else if (strcmp(chans, "mono") == 0) {
         out->channels = ROC_CHANNEL_LAYOUT_MONO;
     } else {
         pa_log("invalid %s: %s", chans_arg_name, chans);
