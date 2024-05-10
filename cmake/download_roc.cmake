@@ -44,8 +44,6 @@ include_directories(SYSTEM
   "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix/include"
 )
 
-set(LIBROC "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix/lib/libroc.a")
-
-set(CMAKE_SHARED_LINKER_FLAGS
-  "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--whole-archive ${LIBROC} -Wl,--no-whole-archive -lstdc++"
+link_libraries(
+  "${CMAKE_CURRENT_BINARY_DIR}/roc-prefix/lib/libroc.a"
 )

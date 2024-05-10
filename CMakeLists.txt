@@ -130,8 +130,6 @@ else()
 
   link_libraries(
     "roc"
-    "stdc++"
-    "pthread"
   )
 endif()
 
@@ -169,6 +167,11 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 link_libraries(Threads::Threads)
+
+# for libroc.a
+link_libraries(
+  "stdc++"
+)
 
 add_definitions(
   -DROC_PULSEAUDIO_VERSION=${PULSEAUDIO_VERSION}
