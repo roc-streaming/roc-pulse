@@ -149,28 +149,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if(NOT CMAKE_C_FLAGS MATCHES "-fPIC")
-  set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -fPIC")
-endif()
+add_compile_options(
+  "-Wall"
+  "-Wextra"
+  "-Wno-unused-variable"
+  "-fPIC"
+  "-pthread"
+)
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-variable")
-endif()
-
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_C_FLAGS
-    "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-variable")
-endif()
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-link_libraries(Threads::Threads)
-
-# for libroc.a
-link_libraries(
-  "stdc++"
+set(CMAKE_SHARED_LINKER_FLAGS
+  "${CMAKE_SHARED_LINKER_FLAGS} -pthread -lstdc++"
 )
 
 add_definitions(
