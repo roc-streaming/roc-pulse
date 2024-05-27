@@ -1,0 +1,27 @@
+#!/usr/bin/make -f
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
+export DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+export DEB_BUILD_OPTIONS = nocheck
+
+export PA_VER = $(shell pulseaudio --version | egrep -o '[0-9.]*')
+export PA_URL = https://www.freedesktop.org/software/pulseaudio/releases/pulseaudio-${PA_VER}.tar.xz
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	mkdir -p 3rdparty
+	wget -vcP ../.. \
+		--content-disposition \
+		--trust-server-name ${PA_URL}
+	tar -C 3rdparty -xJvf ../../pulseaudio-${PA_VER}.tar.xz pulseaudio-${PA_VER}/src/pulsecore
+	# Required to allow autoselecting a build system
+	rm Makefile
+	dh_auto_configure -- \
+		-DDOWNLOAD_ROC=OFF \
+		-DDOWNLOAD_PULSEAUDIO=OFF \
+		-DDOWNLOAD_LIBTOOL=OFF \
+		-DPULSEAUDIO_DIR=3rdparty/pulseaudio-${PA_VER} \
+		-DPULSEAUDIO_VERSION=${PA_VER}
