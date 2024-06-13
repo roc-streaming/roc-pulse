@@ -190,8 +190,7 @@ Roc sink input supports several options:
 | latency\_backend           | selected automatically | latency tuner backend (default, niq)                                        |                             |
 | latency\_profile           | selected automatically | latency tuner profile (default, intact, responsive, gradual)                |                             |
 | target\_latency\_msec      | 200                    | target latency in milliseconds                                              |                             |
-| min\_latency\_msec         | selected automatically | minimum latency in milliseconds                                             |                             |
-| max\_latency\_msec         | selected automatically | maximum latency in milliseconds                                             |                             |
+| latency\_tolerance\_msec   | selected automatically | maximum latency deviation in milliseconds                                   |                             |
 | io\_latency\_msec          | 40                     | playback latency in milliseconds                                            |                             |
 | no\_play_timeout\_msec     | selected automatically | no playback timeout in milliseconds                                         |                             |
 | choppy\_play_timeout\_msec | selected automatically | choppy playback timeout in milliseconds                                     |                             |
@@ -252,8 +251,7 @@ Roc sink supports several options:
 | latency\_backend         | disabled               | latency tuner backend (default, niq)                                        | for sender-side latency tuner |
 | latency\_profile         | disabled               | latency tuner profile (default, intact, responsive, gradual)                | for sender-side latency tuner |
 | target\_latency\_msec    | disabled               | target latency in milliseconds                                              | for sender-side latency tuner |
-| min\_latency\_msec       | disabled               | minimum latency in milliseconds                                             | for sender-side latency tuner |
-| max\_latency\_msec       | disabled               | maximum latency in milliseconds                                             | for sender-side latency tuner |
+| latency\_tolerance\_msec | disabled               | maximum latency deviation in milliseconds                                   | for sender-side latency tuner |
 
 Here is how you can create a Roc sink from command line:
 
@@ -321,9 +319,8 @@ This parameter should be provided on **both sender and receiver** and have **exa
 
 Essential receiver-side (`module-roc-sink-input`) parameters are:
 
-* `target_latency` - which latency should be maintained
-* `min_latency` - which minimum latency causes session restart
-* `max_latency` - which maximum latency causes session restart
+* `target_latency_msec` - which latency should be maintained
+* `latency_tolerance_msec` - maximum allowed deviation from target latency
 
 You can also force specific latency tuner settings (by default they're auto-selected based on target latency):
 

@@ -51,8 +51,7 @@ PA_MODULE_USAGE("local_ip=<local receiver ip> "
                 "latency_backend=default|niq "
                 "latency_profile=default|intact|responsive|gradual "
                 "target_latency_msec=<target latency in milliseconds> "
-                "min_latency_msec=<minimum latency in milliseconds> "
-                "max_latency_msec=<maximum latency in milliseconds> "
+                "latency_tolerance_msec=<maximum latency deviation in milliseconds> "
                 "io_latency_msec=<playback latency in milliseconds> "
                 "no_play_timeout_msec=<no playback timeout in milliseconds> "
                 "choppy_play_timeout_msec=<choppy playback timeout in milliseconds>");
@@ -90,8 +89,7 @@ static const char* const roc_sink_input_modargs[] = {
     "latency_backend",
     "latency_profile",
     "target_latency_msec",
-    "min_latency_msec",
-    "max_latency_msec",
+    "latency_tolerance_msec",
     "io_latency_msec",
     "no_play_timeout_msec",
     "choppy_play_timeout_msec",
@@ -288,14 +286,8 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (rocpulse_parse_duration_msec_ll(&receiver_config.min_latency, 1, args,
-                                        "min_latency_msec", "0")
-        < 0) {
-        goto error;
-    }
-
-    if (rocpulse_parse_duration_msec_ll(&receiver_config.max_latency, 1, args,
-                                        "max_latency_msec", "0")
+    if (rocpulse_parse_duration_msec_ll(&receiver_config.latency_tolerance, 1, args,
+                                        "latency_tolerance_msec", "0")
         < 0) {
         goto error;
     }
