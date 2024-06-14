@@ -286,7 +286,7 @@ int pa__init(pa_module* m) {
         goto error;
     }
 
-    if (rocpulse_parse_duration_msec_ll(&receiver_config.latency_tolerance, 1, args,
+    if (rocpulse_parse_duration_msec_ul(&receiver_config.latency_tolerance, 1, args,
                                         "latency_tolerance_msec", "0")
         < 0) {
         goto error;
