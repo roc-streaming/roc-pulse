@@ -108,7 +108,7 @@ endif()
 
 if(DOWNLOAD_ROC)
   if(NOT ROC_REVISION)
-    set(ROC_REVISION "v0.3.0")
+    set(ROC_REVISION "master")
   endif()
   message(STATUS "Using ROC_REVISION - ${ROC_REVISION}")
 
