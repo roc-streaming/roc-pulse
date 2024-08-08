@@ -2,7 +2,7 @@ include(ExternalProject)
 
 ExternalProject_Add(pulseaudio
   URL
-   "https://freedesktop.org/software/pulseaudio/releases/pulseaudio-${PULSEAUDIO_VERSION}.tar.gz"
+   "https://distributions.freedesktop.org/software/pulseaudio/releases/pulseaudio-${PULSEAUDIO_VERSION}.tar.gz"
   SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/pulseaudio-src"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
