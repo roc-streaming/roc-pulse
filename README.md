@@ -85,7 +85,7 @@ You can disable automatic downloading of dependencies and build them manually.
 
 First, download, build and install Roc Toolkit into the system as described on [this page](https://roc-streaming.org/toolkit/docs/building/user_cookbook.html).
 
-Then download and unpack PulseAudio source code [from here](https://freedesktop.org/software/pulseaudio/releases/). There is no need to configure and build it, only source code is needed.
+Then download and unpack PulseAudio source code [from here](https://distributions.freedesktop.org/software/pulseaudio/releases/). There is no need to configure and build it, only source code is needed.
 
 > Note: PulseAudio doesn't provide official API for out-of-tree modules. This is the reason why we need full PulseAudio source code to build modules.
 
