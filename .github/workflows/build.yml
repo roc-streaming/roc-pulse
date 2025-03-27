@@ -4,10 +4,15 @@ on:
   push:
     branches:
       - main
+      - v*
     tags:
       - v*
 
   pull_request:
+
+  repository_dispatch:
+    types:
+      - trigger_build
 
   workflow_dispatch:
 
@@ -15,7 +20,7 @@ on:
     - cron: '0 0 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: build-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -25,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -50,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -83,7 +88,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -118,7 +123,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -151,7 +156,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -169,7 +174,7 @@ jobs:
 
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
@@ -201,7 +206,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download pulseaudio
         run: |
@@ -253,7 +258,7 @@ jobs:
     name: pulse-versions/${{ matrix.pulse_ver }}/${{ matrix.mode }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install native dependencies
         if: ${{ matrix.mode == 'native' }}
@@ -310,7 +315,7 @@ jobs:
     name: linux-versions/${{ matrix.distro }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: addnab/docker-run-action@v3
         with:
@@ -350,7 +355,7 @@ jobs:
     name: toolchains/${{ matrix.toolchain }}
     steps:
       - name: Checkout roc-pulse
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - uses: addnab/docker-run-action@v3
         with:

@@ -58,7 +58,7 @@ sudo apt install -y \
     gcc g++ \
     make \
     libtool intltool m4 autoconf automake \
-    meson libsndfile-dev \
+    meson libltdl-dev libsndfile-dev \
     cmake \
     scons \
     git \
