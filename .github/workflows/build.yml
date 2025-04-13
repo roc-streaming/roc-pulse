@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - v*
     tags:
       - v*
 
@@ -20,11 +19,10 @@ on:
     - cron: '0 0 * * 1'
 
 concurrency:
-  group: build-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-
   native-build-download-all:
     runs-on: ubuntu-latest
 
@@ -158,10 +156,9 @@ jobs:
       - name: Checkout roc-pulse
         uses: actions/checkout@v4
 
-      - uses: addnab/docker-run-action@v3
+      - uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -184,10 +181,9 @@ jobs:
         run: |
           ./scripts/download_roc.sh ./roc-toolkit
 
-      - uses: addnab/docker-run-action@v3
+      - uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             ./scripts/build_and_install_roc.sh ./roc-toolkit ./roc-install aarch64-linux-gnu
@@ -216,10 +212,9 @@ jobs:
         run: |
           ./scripts/download_libtool.sh ./libtool "2.4.6"
 
-      - uses: addnab/docker-run-action@v3
+      - uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -277,10 +272,9 @@ jobs:
 
       - name: Cross build
         if: ${{ matrix.mode != 'native' }}
-        uses: addnab/docker-run-action@v3
+        uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: rocstreaming/toolchain-aarch64-linux-gnu
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -317,10 +311,9 @@ jobs:
       - name: Checkout roc-pulse
         uses: actions/checkout@v4
 
-      - uses: addnab/docker-run-action@v3
+      - uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
@@ -357,10 +350,9 @@ jobs:
       - name: Checkout roc-pulse
         uses: actions/checkout@v4
 
-      - uses: addnab/docker-run-action@v3
+      - uses: roc-streaming/ci/actions/docker-run@main
         with:
           image: ${{ matrix.image }}
-          options: -v ${{ github.workspace }}:/work -w /work
           run: |
             set -ex
             mkdir build
