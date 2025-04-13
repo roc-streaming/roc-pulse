@@ -320,7 +320,7 @@ jobs:
             cd build
             cmake ..
             make VERBOSE=1
-            sudo make install
+            make install
 
   toolchains:
     runs-on: ubuntu-latest
