@@ -6,6 +6,7 @@
 
 - [What is this?](#what-is-this)
 - [Interoperability](#interoperability)
+- [Releases](#releases)
 - [Build instructions](#build-instructions)
 - [Running receiver](#running-receiver)
 - [Running sender](#running-sender)
@@ -45,7 +46,7 @@ These modules can communicate with all other Roc Toolkit senders and receivers:
 * [C library](https://roc-streaming.org/toolkit/docs/api.html) and [bindings for other languages](https://roc-streaming.org/toolkit/docs/api/bindings.html)
 * [applications](https://roc-streaming.org/toolkit/docs/tools/applications.html) (Android)
 
-## Changelog
+## Releases
 
 Changelog file can be found here: [CHANGES.md](CHANGES.md).
 
