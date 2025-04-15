@@ -19,3 +19,7 @@ clean:
 	rm -rf build
 	rm -rf bin
 	rm -f compile_commands.json
+
+md:
+	markdown-toc --maxdepth 2 -i README.md
+	md-authors --format modern --append AUTHORS.md

@@ -45,6 +45,10 @@ These modules can communicate with all other Roc Toolkit senders and receivers:
 * [C library](https://roc-streaming.org/toolkit/docs/api.html) and [bindings for other languages](https://roc-streaming.org/toolkit/docs/api/bindings.html)
 * [applications](https://roc-streaming.org/toolkit/docs/tools/applications.html) (Android)
 
+## Changelog
+
+Changelog file can be found here: [CHANGES.md](CHANGES.md).
+
 ## Build instructions
 
 ### Simple build
@@ -374,7 +378,9 @@ Second, you can try to replace sender, receiver, or both with Roc command line t
 
 ## Authors
 
-See [here](https://github.com/roc-streaming/roc-pulse/graphs/contributors).
+You can find list of authors and contributors [here](AUTHORS.md). Feel free to send a pull request if you're missing from the list or want to change your appearance.
+
+For Roc Toolkit authors, see [here](https://roc-streaming.org/toolkit/docs/about_project/authors.html).
 
 ## License
 
